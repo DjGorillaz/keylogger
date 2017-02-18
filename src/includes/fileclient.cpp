@@ -116,23 +116,24 @@ bool FileClient::sendFile(QString path)
 
         //Write file by chunks
         QByteArray fileArray = file.read(32768*8);
+        bool result = false;
         while( !fileArray.isEmpty())
         {
             //qDebug() << "Read : " << fileArray.size();
             socket->write(fileArray);
-            socket->waitForBytesWritten();
+            result = socket->waitForBytesWritten();
             fileArray.clear();
             fileArray = file.read(32768*8);
         }
 
-        if (socket->waitForBytesWritten())
+        if (result)
         {
             qDebug() << "Data transmitted";
             return true;
         }
         else
         {
-            qDebug() << "Error: " << socket->errorString();
+            qDebug() << "Error: " << socket->error();
             return false;
         }
         file.close();

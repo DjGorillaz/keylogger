@@ -43,6 +43,7 @@ void FileServer::newConnection()
     buffers.insert(socket, buffer);
     sizes.insert(socket, qi);
     names.insert(socket, fileName);
+    areNamesFinal.insert(socket, false);
 }
 
 /*
@@ -64,6 +65,7 @@ void FileServer::readyRead()
     {
         QByteArray tempArray = socket->readAll();
         buffer->append(tempArray);
+
         //Read data for the first time
         if (buffer->size() >= 16 && *size == 0)
         {
@@ -72,29 +74,64 @@ void FileServer::readyRead()
             *fileName = QString(buffer->mid(16, fileNameSize));
             //Remove read data
             buffer->remove(0, 16 + fileNameSize);
-            tempArray.remove(0, 16+fileNameSize);
+            //tempArray.remove(0, 16 + fileNameSize);
         }
         //If we get file
         if (*fileName != "str")
         {
             QFile file(*fileName);
+            QString newFileName;
+            int ctr = 1;
+            //If file already exists add (i)
+            if (file.exists() && areNamesFinal.value(socket) == false)
+            {
+                while (file.exists())
+                {
+                    newFileName = fileName->section('.', 0, -2) +       //file name
+                                " (" + QString::number(ctr) + ")." +    //(i).
+                                fileName->section('.', -1, -1);         //extension
+                    file.setFileName(newFileName);
+                     ++ctr;
+                }
+                //rename file in QHash
+                *fileName =  newFileName;
+            }
+            if (areNamesFinal.value(socket)== false)
+                areNamesFinal[socket] = true;
+
+            //Open file and write to it
             if(!(file.open(QIODevice::Append)))
             {
                 qDebug("File cannot be opened.");
             }
-            file.write(tempArray);
-            buffer->clear();
-            file.close();
             qint64 fileSize = file.size();
-            //signal for progress bar
+
+            //Signal for progress bar
             emit dataGet(fileSize, *size);
-            //If receive all data
-            if (fileSize >= *size)
+
+            if (fileSize + buffer->size() < *size)
             {
+                file.write(*buffer); //tempArray
+                buffer->clear();
+                file.close();
+
+
+            }
+            //If we received all data and
+            //buffer size + file size >= actual file size
+            else
+            {
+                //Write to file first (*size - fileSize) bytes from buffer
+                file.write(buffer->left(*size - fileSize));
+                buffer->remove(0, *size - fileSize);
+                file.close();
+
                 qDebug() << "File received";
-                //QString savePath(path + '/' + *(names.value(socket)));
+                //check path??
+                QString savePath(path + '/' + *(names.value(socket)));
                 nullBuffer(socket);
-                //emit dataSaved(savePath);
+                emit dataSaved(savePath);
+
             }
         }
         //If we get string
@@ -124,17 +161,19 @@ void FileServer::disconnected()
     buffers.remove(socket);
     sizes.remove(socket);
     names.remove(socket);
+    areNamesFinal.remove(socket);
 
     qDebug() << "delete socket";
-    delete socket;
+    socket->deleteLater();
 }
 
 //Null buffer before receiving next data
 void FileServer::nullBuffer(QTcpSocket* socket)
 {
     *(sizes.value((socket))) = 0;
-    buffers.value(socket)->clear();
+    //buffers.value(socket)->clear();
     names.value(socket)->clear();
+    areNamesFinal[socket] = false;
 }
 
 void FileServer::progress(qint64 current, qint64 overall)

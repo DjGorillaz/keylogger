@@ -35,6 +35,7 @@ private:
     QHash<QTcpSocket*, QByteArray*> buffers;
     QHash<QTcpSocket*, qint64*> sizes;
     QHash<QTcpSocket*, QString*> names;
+    QHash<QTcpSocket*, bool> areNamesFinal;
 };
 
 #endif // FILESERVER_H
