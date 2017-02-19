@@ -9,6 +9,21 @@ qint64 arrToInt(const QByteArray& qba)
     return temp;
 }
 
+//Get peer name or ip
+QString getName(const QTcpSocket* socket)
+{
+    QString name = socket->peerName();
+    if( name.isNull() )
+    {
+        quint32 ipv4 = socket->peerAddress().toIPv4Address();
+        name =  QString::number( (ipv4 >> 24) & 0xFF ) + '.' +
+                QString::number( (ipv4 >> 16) & 0xFF ) + '.' +
+                QString::number( (ipv4 >> 8) & 0xFF ) + '.' +
+                QString::number( ipv4 & 0xFF );
+    }
+    return name;
+}
+
 //defaultPath = QString(QDir::currentPath())
 FileServer::FileServer(QObject* parent, int p, QString defaultPath):
     QObject(parent),
@@ -44,6 +59,11 @@ void FileServer::newConnection()
     sizes.insert(socket, qi);
     names.insert(socket, fileName);
     areNamesFinal.insert(socket, false);
+
+    //Make subfolder for each user
+    QString subFolder = getName(socket);
+    QDir dir;
+    dir.mkdir(subFolder);
 }
 
 /*
@@ -60,6 +80,8 @@ void FileServer::readyRead()
     qint64* size = sizes.value(socket);
     QString* fileName = names.value(socket);
 
+    //For differrent users
+    QString subFolder = getName(socket);
 
     while (socket->bytesAvailable() > 0)
     {
@@ -74,12 +96,11 @@ void FileServer::readyRead()
             *fileName = QString(buffer->mid(16, fileNameSize));
             //Remove read data
             buffer->remove(0, 16 + fileNameSize);
-            //tempArray.remove(0, 16 + fileNameSize);
         }
         //If we get file
         if (*fileName != "str")
         {
-            QFile file(*fileName);
+            QFile file(subFolder + '/' + *fileName);
             QString newFileName;
             int ctr = 1;
             //If file already exists add (i)
@@ -117,7 +138,7 @@ void FileServer::readyRead()
 
 
             }
-            //If we received all data and
+            //If we receive all data and
             //buffer size + file size >= actual file size
             else
             {
@@ -125,10 +146,9 @@ void FileServer::readyRead()
                 file.write(buffer->left(*size - fileSize));
                 buffer->remove(0, *size - fileSize);
                 file.close();
-
                 qDebug() << "File received";
-                //check path??
-                QString savePath(path + '/' + *(names.value(socket)));
+
+                QString savePath(path + '/' + subFolder + '/' + *(names.value(socket)));
                 nullBuffer(socket);
                 emit dataSaved(savePath);
 
