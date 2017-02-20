@@ -1,5 +1,4 @@
 #include "fileclient.h"
-#include <QThread>
 
 //Convert qint64 to QByteArray
 QByteArray intToArr(qint64 value)
