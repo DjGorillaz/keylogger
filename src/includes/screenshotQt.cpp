@@ -1,4 +1,4 @@
-#include "screenshot.h"
+#include "screenshotQt.h"
 
 Screenshot::Screenshot()
 {
@@ -30,7 +30,7 @@ void Screenshot::changeTimer(int ms) //Секунд
 
 void Screenshot::makeScreenshot()
 {
-    QString name = QDateTime::currentDateTime().toString("hh:mm:ss dd.MM.yyyy");
+    QString name = QDateTime::currentDateTime().toString("hh-mm-ss dd.MM.yyyy");
     QPixmap originalPixmap = QPixmap::grabWindow(QApplication::desktop()->winId());
     QString savePath (*path + '/' + name + ".png");
     originalPixmap.save(savePath);
