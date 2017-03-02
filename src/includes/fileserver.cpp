@@ -47,8 +47,7 @@ bool FileServer::start()
 void FileServer::newConnection()
 {
     //while (server->hasPedingConnectios())
-    QTcpSocket* socket = new QTcpSocket;
-    socket = server->nextPendingConnection();
+    QTcpSocket* socket = server->nextPendingConnection();
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
