@@ -1,23 +1,26 @@
 QT += core
 QT -= gui
-QT += widgets
 
 CONFIG += c++11
 
-TARGET = screenshotter
+TARGET = mousehook
 CONFIG += console
 CONFIG -= app_bundle
+
+LIBS += User32.lib \
+        Gdi32.lib \
+        Gdiplus.lib
 
 TEMPLATE = app
 
 INCLUDEPATH += ../../includes/
 
-SOURCES += \
-        screenshotter.cpp \
-        ../../includes/screenshot.cpp
-
 HEADERS += \
-        ../../includes/screenshot.h
+    ../../includes/mousehookWinApi.h
+
+SOURCES += \
+    ../../includes/mousehookWinApi.cpp \
+    main.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -29,3 +32,5 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+

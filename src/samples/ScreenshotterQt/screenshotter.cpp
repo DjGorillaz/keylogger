@@ -1,4 +1,4 @@
-#include "screenshot.h"
+#include "screenshotQt.h"
 
 int main(int argc, char *argv[])
 {
@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 
     Screenshot scr1;
     //scr1.makeScreenshot();
-    scr1.changeTimer(7);
+    scr1.changeTimer(4);
 
 
     return a.exec();
