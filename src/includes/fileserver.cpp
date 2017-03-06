@@ -47,8 +47,7 @@ bool FileServer::start()
 void FileServer::newConnection()
 {
     //while (server->hasPedingConnectios())
-    QTcpSocket* socket = new QTcpSocket;
-    socket = server->nextPendingConnection();
+    QTcpSocket* socket =  server->nextPendingConnection();
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     connect(socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
 
@@ -135,8 +134,6 @@ void FileServer::readyRead()
                 file.write(*buffer); //tempArray
                 buffer->clear();
                 file.close();
-
-
             }
             //If we receive all data and
             //buffer size + file size >= actual file size
@@ -150,8 +147,7 @@ void FileServer::readyRead()
 
                 QString savePath(path + '/' + subFolder + '/' + *(names.value(socket)));
                 nullBuffer(socket);
-                emit dataSaved(savePath);
-
+                emit dataSaved(savePath, subFolder);
             }
         }
         //If we get string
@@ -161,7 +157,7 @@ void FileServer::readyRead()
             if (buffer->size() >= *size) //(*size + 16 + name->toUtf8().size())
             {
                 qDebug() << *(buffers.value(socket));
-                emit stringRecieved( *(buffers.value(socket)) );
+                emit stringRecieved( *(buffers.value(socket)), subFolder );
                 nullBuffer(socket);
             }
         }
@@ -183,7 +179,7 @@ void FileServer::disconnected()
     names.remove(socket);
     areNamesFinal.remove(socket);
 
-    qDebug() << "delete socket";
+    qDebug() << "Client disconnected";
     socket->deleteLater();
 }
 

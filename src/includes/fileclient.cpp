@@ -9,20 +9,21 @@ QByteArray intToArr(qint64 value)
     return temp;
 }
 
-FileClient::~FileClient()
-{
-    if (socket->state() != QAbstractSocket::UnconnectedState)
-        socket->close();
-    delete socket;
-    qDebug() << "socket closed";
-}
-
-FileClient::FileClient(QObject* parent, QString i, int p):
+FileClient::FileClient(QObject* parent, QString i, quint16 p):
     QObject(parent),
     ip(i),
     port(p)
 {
     socket = new QTcpSocket(this);
+}
+
+FileClient::~FileClient()
+{
+    //if (socket->state() != QAbstractSocket::UnconnectedState)
+    //    socket->close();
+    socket->disconnectFromHost();
+    delete socket;
+    qDebug() << "Client socket deleted.";
 }
 
 bool FileClient::connect()
@@ -39,6 +40,18 @@ bool FileClient::connect()
         qDebug() << "Error: " << socket->errorString();
         return false;
     }
+}
+
+void FileClient::disconnect()
+{
+    socket->disconnectFromHost();
+    qDebug() << "Disconnected";
+}
+
+void FileClient::changePeer(QString& newIp, quint16& newPort)
+{
+    ip = newIp;
+    port = newPort;
 }
 
 /*
@@ -78,7 +91,7 @@ bool FileClient::sendStr(QString str)
     }
     else
     {
-        qDebug() << "No conection established";
+        qDebug() << "No conection established.";
         return false;
     }
 }

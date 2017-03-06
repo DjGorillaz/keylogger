@@ -17,8 +17,8 @@ public:
     bool start();
 
 signals:
-    void dataSaved(QString path);
-    void stringRecieved(QString string);
+    void dataSaved(QString path, QString ip);
+    void stringRecieved(QString string, QString ip);
     void dataGet(qint64, qint64);
 
 private slots:
