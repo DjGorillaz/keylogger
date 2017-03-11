@@ -3,11 +3,16 @@
 
 #include <QMainWindow>
 #include <QMap>
+#include <QTreeWidget>
 
 #include "config.h"
 #include "fileserver.h"
 #include "fileclient.h"
 
+#include <QDataWidgetMapper>
+#include <QStandardItemModel>
+#include <QDirIterator>
+#include <QAbstractProxyModel>
 
 namespace Ui {
 class Server;
@@ -32,11 +37,21 @@ private:
 
     void setForm(Config& cfg);
     void setConfig(Config& cfg);
+    void setupModels();
+    bool saveUsers();
+    bool loadUsers();
+
+    QStandardItemModel* treeModel;
+    QDataWidgetMapper* treeMapper;
+    QStandardItemModel* uiModel;
+    QDataWidgetMapper* uiMapper;
 
     FileServer* fileServer;
     FileClient* fileClient;
     QHash<QString, Config*> usersConfig;
     QHash<QString, QString> usernames;
+
+
 };
 
 #endif // SERVER_H

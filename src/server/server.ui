@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>453</height>
+    <height>519</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -93,25 +93,14 @@
        <widget class="QPlainTextEdit" name="plainTextEdit"/>
       </item>
       <item row="1" column="0">
-       <widget class="QTreeWidget" name="treeUsers">
-        <column>
-         <property name="text">
-          <string>user</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>ip</string>
-         </property>
-        </column>
-       </widget>
+       <widget class="QTreeView" name="treeUsers"/>
       </item>
      </layout>
     </item>
     <item row="3" column="0">
      <widget class="QPushButton" name="buttonLoadConfig">
       <property name="text">
-       <string>load config</string>
+       <string>save users</string>
       </property>
      </widget>
     </item>
