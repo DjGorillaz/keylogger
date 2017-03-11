@@ -12,7 +12,7 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-INCLUDEPATH += ../../includes/
+INCLUDEPATH += ../includes/
 
 SOURCES += \
         client.cpp \

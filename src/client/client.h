@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QTimer>
 
-#include "../includes/config.h"
-#include "../includes/fileserver.h"
-#include "../includes/fileclient.h"
+#include "config.h"
+#include "fileserver.h"
+#include "fileclient.h"
 
 class Client : public QObject
 {
