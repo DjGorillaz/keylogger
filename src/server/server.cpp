@@ -220,7 +220,6 @@ void Server::getString(QString str, QString ip)
             if( ! loadConfig(*config, path) )
             {
                 qDebug() << "Config not found. Creating new.";
-                initDefaultConfig(*config);
                 saveConfig(*config, path);
             }
             usernames.insert(ip, userName);

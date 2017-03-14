@@ -18,11 +18,11 @@ QDataStream & operator >> (QDataStream& stream, Config& config)
     return stream;
 }
 
-void initDefaultConfig(Config& config)
+Config::Config()
 {
-    config.seconds = 0;
-    config.mouseButtons = 0;
-    config.bindEnter = false;
+    seconds = 0;
+    mouseButtons = 0;
+    bindEnter = false;
 }
 
 bool loadConfig(Config& config, QString defaultPath)

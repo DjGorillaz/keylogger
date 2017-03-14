@@ -22,7 +22,6 @@ Client::Client()
     if( ! loadConfig(*config) )
     {
         qDebug() << "Config not found. Creating new.";
-        initDefaultConfig(*config);
         saveConfig(*config);
     }
 

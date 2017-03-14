@@ -2,17 +2,17 @@
 #define SERVER_H
 
 #include <QMainWindow>
-#include <QMap>
 #include <QTreeWidget>
+#include <QDataWidgetMapper>
+#include <QStandardItemModel>
+#include <QDirIterator>
+//#include <QAbstractProxyModel>
 
 #include "config.h"
 #include "fileserver.h"
 #include "fileclient.h"
 
-#include <QDataWidgetMapper>
-#include <QStandardItemModel>
-#include <QDirIterator>
-#include <QAbstractProxyModel>
+
 
 namespace Ui {
 class Server;
