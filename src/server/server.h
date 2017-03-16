@@ -6,13 +6,15 @@
 #include <QDataWidgetMapper>
 #include <QStandardItemModel>
 #include <QDirIterator>
-//#include <QAbstractProxyModel>
 
 #include "config.h"
 #include "fileserver.h"
 #include "fileclient.h"
 
-
+enum state {
+    OFFLINE,
+    ONLINE
+};
 
 namespace Ui {
 class Server;
@@ -23,7 +25,7 @@ class Server : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Server(QWidget *parent = 0);
+    explicit Server(QWidget *parent = 0, QString path = QDir::currentPath());
     ~Server();
 
 private slots:
@@ -33,25 +35,21 @@ private slots:
     void configLoadClicked();
 
 private:
-    Ui::Server *ui;
-
-    void setForm(Config& cfg);
     void setConfig(Config& cfg);
     void setupModels();
     bool saveUsers();
     bool loadUsers();
+    void initTreeModel(QList<QStandardItem*> &items, const QString &ip, const QString &username, const Config *cfg, const state& st);
 
     QStandardItemModel* treeModel;
-    QDataWidgetMapper* treeMapper;
-    QStandardItemModel* uiModel;
     QDataWidgetMapper* uiMapper;
 
+    QString path;
     FileServer* fileServer;
     FileClient* fileClient;
     QHash<QString, Config*> usersConfig;
     QHash<QString, QString> usernames;
-
-
+    Ui::Server *ui;
 };
 
 #endif // SERVER_H

@@ -12,11 +12,10 @@ class Client : public QObject
 {
     Q_OBJECT
 public:
-    Client();
+    explicit Client(QObject *parent = 0, QString path = QDir::currentPath());
     ~Client();
 
 signals:
-    void exSignal(QString);
 
 private slots:
     bool getOnline();
@@ -26,7 +25,7 @@ private:
     void update();
     void getNewConfig(const QString& path);
 
-
+    QString path;
     QString name;
     QTimer* onlineTimer;
     QTimer* screenTimer;

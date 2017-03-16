@@ -2,11 +2,12 @@
 #include <QDebug>
 #include "client.h"
 
-
-Client::Client()
+Client::Client(QObject* parent, QString defaultPath):
+    QObject(parent),
+    path(defaultPath)
 {
     //Start modules
-    fileServer = new FileServer(0, 1234);
+    fileServer = new FileServer(0, 1234, path);
     fileClient = new FileClient(0, "127.0.0.1", 12345);
     config = new Config;
     onlineTimer = new QTimer;
@@ -98,16 +99,17 @@ void Client::getNewConfig(const QString &path)
 {
     loadConfig(*config, path);
     update();
-    //if config file already exists or config has another name
-    if (path.section('/', -1, -1) != "config.cfg")
-    {
-        QFile oldConfig("config.cfg");
-        QFile newConfig(path);
-        //Remove old config and rename new
-        if (oldConfig.exists())
-            oldConfig.remove();
-        newConfig.rename("config.cfg");
-    }
+    //Delete old config and rename new
+    QFile oldConfig("config.cfg");
+    QFile newConfig(path);
+    if (oldConfig.exists())
+        oldConfig.remove();
+    newConfig.rename("config.cfg");
+
+    //Check if folder is empty
+    QDir dir = path.section('/', 0, -2);
+    if(dir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0)
+        dir.rmdir(dir.dirName());
 }
 
 int main(int argc, char *argv[])

@@ -37,3 +37,6 @@ HEADERS  += server.h    \
         ../includes/fileserver.h
 
 FORMS    += server.ui
+
+RESOURCES += \
+        ../images/images.qrc

@@ -62,7 +62,7 @@ void FileServer::newConnection()
     //Make subfolder for each user
     QString subFolder = getName(socket);
     QDir dir;
-    dir.mkdir(subFolder);
+    dir.mkpath(path + "/" + subFolder);
 }
 
 /*
@@ -99,7 +99,7 @@ void FileServer::readyRead()
         //If we get file
         if (*fileName != "str")
         {
-            QFile file(subFolder + '/' + *fileName);
+            QFile file(path + '/' + subFolder + '/' + *fileName);
             QString newFileName;
             int ctr = 1;
             //If file already exists add (i)
