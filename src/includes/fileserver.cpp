@@ -31,7 +31,7 @@ FileServer::FileServer(QObject* parent, int p, QString defaultPath):
     path(defaultPath)
 {
     server = new QTcpServer(this);
-    connect(server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+    connect(server, &QTcpServer::newConnection, this, &FileServer::newConnection);
 }
 
 FileServer::~FileServer()
@@ -48,8 +48,8 @@ void FileServer::newConnection()
 {
     //while (server->hasPedingConnectios())
     QTcpSocket* socket =  server->nextPendingConnection();
-    connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
-    connect(socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
+    connect(socket, &QTcpSocket::readyRead, this, &FileServer::readyRead);
+    connect(socket, &QTcpSocket::disconnected, this, &FileServer::disconnected);
 
     QByteArray* buffer = new QByteArray("");
     qint64* qi = new qint64(0);
