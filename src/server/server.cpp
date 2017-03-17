@@ -6,7 +6,7 @@
 //Yusuke Kamiyamane
 //License: Creative Commons (Attribution 3.0 Unported)
 
-Server::Server(QWidget *parent, QString defaultPath) :
+Server::Server(QWidget *parent, const QString& defaultPath) :
     QMainWindow(parent),
     path(defaultPath),
     ui(new Ui::Server)
@@ -82,7 +82,10 @@ Server::Server(QWidget *parent, QString defaultPath) :
 Server::~Server()
 {
     saveUsers();
-    //TODO
+    delete uiMapper;
+    delete treeModel;
+    delete fileServer;
+    delete fileClient;
     delete ui;
 }
 
@@ -194,7 +197,7 @@ bool Server::loadUsers()
 }
 
 
-void Server::getString(QString str, QString ip)
+void Server::getString(const QString str, const QString ip)
 {
     //Parse string
     QString command = str.section(':', 0, 0);
@@ -272,20 +275,29 @@ void Server::configSendClicked()
         QModelIndex ipIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 1);
         QString ip = ipIndex.data().toString();
         quint16 port = 1234;
-
-        QModelIndex nameIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 0);
-        QString userName = nameIndex.data().toString();
         QString cfgPath = path + "/configs/" + ip + ".cfg";
+        QString tempCfgPath = path + "/configs/" + ip + "_temp.cfg";
+        QFile oldCfgFile(cfgPath);
+        QFile tempCfgFile(tempCfgPath);
         Config* cfg = usersConfig.value(ip);
 
-        //TODO create temp file, send, rename
-        fileClient->changePeer(ip, port);
         setConfig(*cfg);
-        saveConfig(*cfg, cfgPath);
+        fileClient->changePeer(ip, port);
+
+        //Save temp config
+        saveConfig(*cfg, tempCfgPath);
+        //Send config
         fileClient->connect();
-        if (fileClient->sendFile(cfgPath))
+        if (fileClient->sendFile(tempCfgPath))
+        {
+            if (oldCfgFile.exists())
+                oldCfgFile.remove();
+            tempCfgFile.rename(cfgPath);
+        }
+        else
         {
             qDebug() << "Config not sent";
+            tempCfgFile.remove();
         }
         fileClient->disconnect();
     }

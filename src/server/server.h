@@ -25,11 +25,11 @@ class Server : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Server(QWidget *parent = 0, QString path = QDir::currentPath());
+    explicit Server(QWidget *parent = 0, const QString& path = QDir::currentPath());
     ~Server();
 
 private slots:
-    void getString(QString str, QString ip);
+    void getString(const QString str, const QString ip);
     void configSendClicked();
     void configSaveClicked();
     void configLoadClicked();

@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "client.h"
 
-Client::Client(QObject* parent, QString defaultPath):
+Client::Client(QObject* parent, const QString& defaultPath):
     QObject(parent),
     path(defaultPath)
 {

@@ -9,7 +9,7 @@ QByteArray intToArr(qint64 value)
     return temp;
 }
 
-FileClient::FileClient(QObject* parent, QString i, quint16 p):
+FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
     QObject(parent),
     ip(i),
     port(p)
@@ -48,7 +48,7 @@ void FileClient::disconnect()
     qDebug() << "Disconnected";
 }
 
-void FileClient::changePeer(QString& newIp, quint16& newPort)
+void FileClient::changePeer(const QString& newIp, const quint16& newPort)
 {
     ip = newIp;
     port = newPort;
@@ -61,7 +61,7 @@ void FileClient::changePeer(QString& newIp, quint16& newPort)
  * size(string), size("str") - qint64
  * string, "str" - QByteArray
  */
-bool FileClient::sendStr(QString str)
+bool FileClient::sendStr(const QString& str)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
@@ -103,7 +103,7 @@ bool FileClient::sendStr(QString str)
  * size(data), size(file_name) - qint64
  * file_name, data - QByteArray
  */
-bool FileClient::sendFile(QString path)
+bool FileClient::sendFile(const QString& path)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
@@ -137,7 +137,7 @@ bool FileClient::sendFile(QString path)
             fileArray.clear();
             fileArray = file.read(32768*8);
         }
-
+        file.close();
         if (result)
         {
             qDebug() << "Data transmitted";
@@ -148,7 +148,6 @@ bool FileClient::sendFile(QString path)
             qDebug() << "Error: " << socket->error();
             return false;
         }
-        file.close();
     }
     else
     {

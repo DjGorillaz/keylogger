@@ -12,8 +12,9 @@ class FileServer : public QObject
 {
     Q_OBJECT
 public:
-    FileServer(QObject *parent, int port, QString defaultPath = QString(QDir::currentPath()));
+    FileServer(QObject *parent, const quint16& port, const QString& defaultPath = QDir::currentPath());
     ~FileServer();
+
     bool start();
 
 signals:
@@ -25,16 +26,17 @@ private slots:
     void newConnection();
     void readyRead();
     void disconnected();
-    void progress(qint64, qint64); //test function
+    void progress(const qint64, const qint64); //test function
 
 private:
     void nullBuffer(QTcpSocket*);
-    int port;
+
+    quint16 port;
     QString path;
     QTcpServer* server;
     QHash<QTcpSocket*, QByteArray*> buffers;
-    QHash<QTcpSocket*, qint64*> sizes;
-    QHash<QTcpSocket*, QString*> names;
+    QHash<QTcpSocket*, qint64> sizes;
+    QHash<QTcpSocket*, QString> names;
     QHash<QTcpSocket*, bool> areNamesFinal;
 };
 

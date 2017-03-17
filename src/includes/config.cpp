@@ -25,7 +25,7 @@ Config::Config()
     bindEnter = false;
 }
 
-bool loadConfig(Config& config, QString defaultPath)
+bool loadConfig(Config& config, const QString& defaultPath)
 {
     QFile cfgFile(defaultPath);
     if ( cfgFile.exists() )
@@ -41,7 +41,7 @@ bool loadConfig(Config& config, QString defaultPath)
         return false;
 }
 
-bool saveConfig(const Config& config, QString defaultPath)
+bool saveConfig(const Config& config, const QString& defaultPath)
 {
     QFile cfgFile(defaultPath);
     if ( !cfgFile.open(QIODevice::WriteOnly) )

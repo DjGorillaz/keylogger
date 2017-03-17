@@ -11,15 +11,14 @@ class FileClient : public QObject
 {
     Q_OBJECT
 public:
-    FileClient(QObject* parent, QString ip, quint16 port);
+    FileClient(QObject* parent, const QString& ip, const quint16& port);
     ~FileClient();
 
-public slots:
+    bool sendFile(const QString& file);
+    bool sendStr(const QString& str);
+    void changePeer(const QString &ip, const quint16 &port);
     bool connect();
     void disconnect();
-    void changePeer(QString &ip, quint16& port);
-    bool sendFile(QString file);
-    bool sendStr(QString str);
 
 private:
     QString ip;

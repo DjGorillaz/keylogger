@@ -12,7 +12,7 @@ class Client : public QObject
 {
     Q_OBJECT
 public:
-    explicit Client(QObject *parent = 0, QString path = QDir::currentPath());
+    explicit Client(QObject *parent = 0, const QString& path = QDir::currentPath());
     ~Client();
 
 signals:

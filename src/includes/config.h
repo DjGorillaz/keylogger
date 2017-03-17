@@ -19,7 +19,7 @@ QDataStream & operator << (QDataStream& stream, Config& config);
 //Write config
 QDataStream & operator >> (QDataStream& stream, Config& config);
 
-bool loadConfig(Config& config, QString defaultPath = (QString(QDir::currentPath()) + "/config.cfg") );
-bool saveConfig(const Config& config, QString defaultPath = (QString(QDir::currentPath()) + "/config.cfg") );
+bool loadConfig(Config& config, const QString& defaultPath = QDir::currentPath() + "/config.cfg");
+bool saveConfig(const Config& config, const QString& defaultPath = QDir::currentPath() + "/config.cfg");
 
 #endif // CONFIG_H
