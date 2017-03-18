@@ -9,20 +9,21 @@ QByteArray intToArr(qint64 value)
     return temp;
 }
 
-FileClient::~FileClient()
-{
-    if (socket->state() != QAbstractSocket::UnconnectedState)
-        socket->close();
-    delete socket;
-    qDebug() << "socket closed";
-}
-
-FileClient::FileClient(QObject* parent, QString i, int p):
+FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
     QObject(parent),
     ip(i),
     port(p)
 {
     socket = new QTcpSocket(this);
+}
+
+FileClient::~FileClient()
+{
+    //if (socket->state() != QAbstractSocket::UnconnectedState)
+    //    socket->close();
+    socket->disconnectFromHost();
+    delete socket;
+    qDebug() << "Client socket deleted.";
 }
 
 bool FileClient::connect()
@@ -41,6 +42,18 @@ bool FileClient::connect()
     }
 }
 
+void FileClient::disconnect()
+{
+    socket->disconnectFromHost();
+    qDebug() << "Disconnected";
+}
+
+void FileClient::changePeer(const QString& newIp, const quint16& newPort)
+{
+    ip = newIp;
+    port = newPort;
+}
+
 /*
  * Packet structure:
  * size(string) + size("str") + "str" + string
@@ -48,7 +61,7 @@ bool FileClient::connect()
  * size(string), size("str") - qint64
  * string, "str" - QByteArray
  */
-bool FileClient::sendStr(QString str)
+bool FileClient::sendStr(const QString& str)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
@@ -78,7 +91,7 @@ bool FileClient::sendStr(QString str)
     }
     else
     {
-        qDebug() << "No conection established";
+        qDebug() << "No conection established.";
         return false;
     }
 }
@@ -90,7 +103,7 @@ bool FileClient::sendStr(QString str)
  * size(data), size(file_name) - qint64
  * file_name, data - QByteArray
  */
-bool FileClient::sendFile(QString path)
+bool FileClient::sendFile(const QString& path)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
@@ -124,7 +137,7 @@ bool FileClient::sendFile(QString path)
             fileArray.clear();
             fileArray = file.read(32768*8);
         }
-
+        file.close();
         if (result)
         {
             qDebug() << "Data transmitted";
@@ -135,7 +148,6 @@ bool FileClient::sendFile(QString path)
             qDebug() << "Error: " << socket->error();
             return false;
         }
-        file.close();
     }
     else
     {
