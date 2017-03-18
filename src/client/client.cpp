@@ -44,10 +44,21 @@ Client::Client(QObject* parent, const QString& defaultPath):
         connect(onlineTimer, &QTimer::timeout, this, &Client::getOnline);
         onlineTimer->start(30*1000);    //30 sec
     }
-    //new variable isOnline?
+    //TODO: new variable isOnline?
 
     //Wait for new config file
     connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getNewFile(str, ip); });
+
+    //Connect screenshot module
+    connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
+    connect(&MouseHook::instance(), &MouseHook::screenSaved,
+            this, [this](QString path){
+                                            if (fileClient->connect())
+                                            {
+                                                fileClient->sendFile(path);
+                                                fileClient->disconnect();
+                                            }
+                                        });
 }
 
 Client::~Client()
@@ -62,16 +73,19 @@ Client::~Client()
 
 void Client::update()
 {
+    qDebug() << "\nCONFIG:";
     qDebug() << "seconds:\t" << config->seconds;
-    int buttons = config->mouseButtons;
-
-    //qDebug() << buttons; //((buttons >> 4) & 0x1);
 
     // 0 x LMB_RMB_MMB_MWH
-    qDebug() << "LMB:\t" << ((buttons >> 3 & 0x1) ? 1 : 0);
-    qDebug() << "RMB:\t" << ((buttons >> 2 & 0x1) ? 1 : 0);
-    qDebug() << "MMB:\t" << ((buttons >> 1 & 0x1) ? 1 : 0);
-    qDebug() << "MWH:\t" << ((buttons & 0x1) ? 1 : 0);
+    int buttons = config->mouseButtons;
+
+    qDebug() << "LMB:\t" << ((buttons & 0x0008) ? 1 : 0);
+    qDebug() << "RMB:\t" << ((buttons & 0x0004) ? 1 : 0);
+    qDebug() << "MMB:\t" << ((buttons & 0x0002) ? 1 : 0);
+    qDebug() << "MWH:\t" << ((buttons & 0x0001) ? 1 : 0);
+
+    //Update screenshot parameters
+    MouseHook::instance().setParameters(buttons, config->seconds);
 }
 
 bool Client::getOnline()

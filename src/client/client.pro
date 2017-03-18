@@ -12,22 +12,25 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+LIBS += User32.lib \
+        Gdi32.lib \
+        Gdiplus.lib
+
 INCLUDEPATH += ../includes/
 
 SOURCES += \
         client.cpp \
         ../includes/config.cpp \
         ../includes/fileclient.cpp \
-        ../includes/fileserver.cpp
+        ../includes/fileserver.cpp \
+        ../includes/mousehookWinApi.cpp
 
 HEADERS += \
         client.h \
         ../includes/config.h \
         ../includes/fileclient.h \
-        ../includes/fileserver.h
-#        ../includes/screenshot.h \
-
-
+        ../includes/fileserver.h \
+        ../includes/mousehookWinApi.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings

@@ -72,10 +72,10 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
 
 void MouseHook::setParameters(int buttons, int seconds)
 {
-    LMB = buttons && 0x0001;
-    RMB = buttons && 0x0002;
-    MMB = buttons && 0x0004;
-    MWH = buttons && 0x0008;
+    LMB = (buttons & 0x0008) ? 1 : 0;
+    RMB = (buttons & 0x0004) ? 1 : 0;
+    MMB = (buttons & 0x0002) ? 1 : 0;
+    MWH = (buttons & 0x0001) ? 1 : 0;
 
     if (seconds == 0)
         timer->stop();

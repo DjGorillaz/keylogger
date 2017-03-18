@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    Server w(0, "/home/djgorillaz/server");
+    Server w(0, "/server");
     w.show();
 
     return a.exec();

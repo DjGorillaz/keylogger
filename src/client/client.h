@@ -7,6 +7,7 @@
 #include "config.h"
 #include "fileserver.h"
 #include "fileclient.h"
+#include "mousehookWinApi.h"
 
 class Client : public QObject
 {
