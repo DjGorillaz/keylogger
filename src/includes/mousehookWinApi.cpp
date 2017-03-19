@@ -1,5 +1,6 @@
 #include "mousehookWinApi.h"
 #include <QDebug>
+#include <QTime>
 
 //See
 //https://msdn.microsoft.com/en-us/library/ms533843(v=vs.85).aspx
@@ -43,16 +44,13 @@ MouseHook &MouseHook::instance()
 MouseHook::MouseHook(QObject *parent) : QObject(parent)
 {
     QDir dir;
-    path = new QString(QDir::currentPath() + "/screens");
-    dir.mkdir(*path);
-
-    //path with another slash
-    pathForGDI = new QString(*path);
-    pathForGDI->replace('/', '\\');
+    QString path = QDir::currentPath() + "/screens";
+    dir.mkdir(path);
 
     timer = new QTimer;
-    connect(timer, SIGNAL(timeout()), this, SLOT(makeScreenshot()));
-
+    MakeScreen* scr = new MakeScreen(0);
+    connect(timer, &QTimer::timeout, scr, &MakeScreen::makeScreenshot);
+    scr->deleteLater();
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
     //Register hook
@@ -120,17 +118,53 @@ LRESULT CALLBACK MouseHook::getMouse(int Code, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(NULL, Code, wParam, lParam);
 }
 
-void MouseHook::makeScreenshot()
+bool MouseHook::getMWH() const
 {
+    return MWH;
+}
+
+bool MouseHook::getMMB() const
+{
+    return MMB;
+}
+
+bool MouseHook::getRMB() const
+{
+    return RMB;
+}
+
+bool MouseHook::getLMB() const
+{
+    return LMB;
+}
+
+MakeScreen::MakeScreen(QObject* parent): QObject(parent)
+{
+
+}
+
+MakeScreen::~MakeScreen()
+{
+
+}
+
+void MakeScreen::makeScreenshot()
+{
+    QString path = QDir::currentPath() + "/screens";
+
+    //path with another slash
+    QString pathForGDI = path;
+    pathForGDI.replace('/', '\\');
+
     QString name = QDateTime::currentDateTime().toString("hh-mm-ss dd.MM.yyyy") + ".jpg";
 
     //Don't make new screenshot if frequency > 1/sec
-    if (QFile::exists(*path + '/' + name))
+    if (QFile::exists(path + '/' + name))
         return;
 
     //DPI support
-    ::SetProcessDPIAware();
-    ::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
+    SetProcessDPIAware();
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
 
     HDC hScreen = GetDC(NULL);
     HDC hMem = CreateCompatibleDC(hScreen);
@@ -163,10 +197,8 @@ void MouseHook::makeScreenshot()
         Bitmap *image = new Bitmap(hBitmap, NULL);
         CLSID jpegClsId;
         GetEncoderClsid(L"image/jpeg", &jpegClsId);
-
-        std::wstring wstr = pathForGDI->toStdWString() + L"\\" + name.toStdWString();
+        std::wstring wstr = pathForGDI.toStdWString() + L"\\" + name.toStdWString();
         image->Save(wstr.c_str(), &jpegClsId, NULL);
-
         delete image;
     }
 
@@ -174,29 +206,9 @@ void MouseHook::makeScreenshot()
     DeleteDC(hMem);
     ReleaseDC(NULL, hScreen);
     DeleteObject(hBitmap);
-
-    emit screenSaved(*path + '/' + name);
+    emit screenSaved(path + '/' + name);
 }
 
-bool MouseHook::getMWH() const
-{
-    return MWH;
-}
-
-bool MouseHook::getMMB() const
-{
-    return MMB;
-}
-
-bool MouseHook::getRMB() const
-{
-    return RMB;
-}
-
-bool MouseHook::getLMB() const
-{
-    return LMB;
-}
 
 
 

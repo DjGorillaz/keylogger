@@ -17,6 +17,7 @@ public:
     ~Client();
 
 signals:
+    void connected();
 
 private slots:
     bool getOnline();
@@ -26,6 +27,7 @@ private:
     void update();
     void getNewConfig(const QString& path);
 
+    bool isOnline;
     QString path;
     QString name;
     QTimer* onlineTimer;

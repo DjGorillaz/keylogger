@@ -9,10 +9,10 @@ QByteArray intToArr(qint64 value)
     return temp;
 }
 
-FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
-    QObject(parent),
-    ip(i),
-    port(p)
+FileClient::FileClient(QObject* parent): //, const QString &i, const quint16 &p):
+    QObject(parent)
+    //ip(i),
+    //port(p)
 {
     socket = new QTcpSocket(this);
 }
@@ -156,6 +156,44 @@ bool FileClient::sendFile(const QString& path)
     }
 
     return false;
+}
+
+
+SendData::SendData(QObject* parent, QString& p):
+    path(p),
+    FileClient(parent)
+{   }
+
+SendData::~SendData()
+{
+    //TODO check with big file
+    socket->deleteLater();
+}
+
+bool SendData::connectAndSendFile()
+{
+    bool result = false;
+    if (connect())
+    {
+        sendFile(path);
+        result = true;
+    }
+    disconnect();
+    emit disconnected(result);
+    return result;
+}
+
+bool SendData::connectAndSendString()
+{
+    bool result = false;
+    if (connect())
+    {
+        sendStr(path);
+        result = true;
+    }
+    disconnect();
+    emit disconnected(result);
+    return result;
 }
 
 

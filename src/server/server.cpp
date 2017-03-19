@@ -6,6 +6,9 @@
 //Yusuke Kamiyamane
 //License: Creative Commons (Attribution 3.0 Unported)
 
+QString FileClient::ip = "127.0.0.1";
+quint16 FileClient::port = 1234;
+
 Server::Server(QWidget *parent, const QString& defaultPath) :
     QMainWindow(parent),
     path(defaultPath),
@@ -65,7 +68,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
 
     //Start modules
     fileServer = new FileServer(this, 12345, path + "/users");
-    fileClient = new FileClient(this, "127.0.0.1", 1234);
+    fileClient = new FileClient(this);
     fileServer->start();
 
     QDir configDir;

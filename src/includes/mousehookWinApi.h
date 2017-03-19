@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QTime>
+#include <QThread>
 
 #include <windows.h>
 #include <gdiplus.h>
@@ -26,10 +27,6 @@ public:
 
 signals:
     void mouseClicked();
-    void screenSaved(QString path);
-
-public slots:
-    void makeScreenshot();
 
 private:
     HHOOK mHook;
@@ -38,11 +35,23 @@ private:
     bool MMB;
     bool MWH;
     QTimer* timer;
-    QString* path;
-    QString* pathForGDI;
 
     MouseHook(QObject *parent = nullptr);
     ~MouseHook() {}
+};
+
+class MakeScreen : public QObject
+{
+    Q_OBJECT
+public:
+    MakeScreen(QObject* parent);
+    ~MakeScreen();
+
+public slots:
+    void makeScreenshot();
+
+signals:
+    void screenSaved(QString path);
 };
 
 #endif // MOUSEHOOK_H
