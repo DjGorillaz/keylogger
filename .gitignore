@@ -1,74 +1,37 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
+# C++ objects and libs
 
-*~
-*.autosave
-*.a
-*.core
-*.moc
+*.slo
+*.lo
 *.o
-*.obj
-*.orig
-*.rej
+*.a
+*.la
+*.lai
 *.so
-*.so.*
-*_pch.h.cpp
-*_resource.rc
-*.qm
-.#*
-*.*#
-core
-!core/
-tags
-.DS_Store
-.directory
-*.debug
-Makefile*
-*.prl
-*.app
-moc_*.cpp
-ui_*.h
-qrc_*.cpp
-Thumbs.db
-*.res
-*.rc
+*.dll
+*.dylib
+
+# Qt-es
+
 /.qmake.cache
 /.qmake.stash
-
-# qtcreator generated files
 *.pro.user
 *.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*build-*
 
-# xemacs temporary files
-*.flc
+# QtCreator
 
-# Vim temporary files
-.*.swp
+*.autosave
 
-# Visual Studio generated files
-*.ib_pdb_index
-*.idb
-*.ilk
-*.pdb
-*.sln
-*.suo
-*.vcproj
-*vcproj.*.*.user
-*.ncb
-*.sdf
-*.opensdf
-*.vcxproj
-*vcxproj.*
+# QtCtreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
 
-# MinGW generated files
-*.Debug
-*.Release
-
-# Python byte code
-*.pyc
-
-# Binaries
-# --------
-*.dll
-*.exe
-
+# QtCtreator CMake
+CMakeLists.txt.user*
