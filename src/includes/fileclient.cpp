@@ -15,43 +15,55 @@ FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
     port(p)
 {
     socket = new QTcpSocket(this);
+    QObject::connect(socket, &QAbstractSocket::connected, this, &FileClient::sendData);
+    QObject::connect(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
+                     this, &FileClient::error);
 }
 
 FileClient::~FileClient()
 {
+    //TODO
     //if (socket->state() != QAbstractSocket::UnconnectedState)
     //    socket->close();
     socket->disconnectFromHost();
-    delete socket;
+    socket->deleteLater();
+    //delete socket;
     qDebug() << "Client socket deleted.";
 }
 
-bool FileClient::connect()
+void FileClient::enqueueData(const type& T, const QString &data)
+{
+    dataQueue.enqueue(qMakePair(T, data));
+}
+
+void FileClient::connect()
 {
     qDebug() << "Connecting to " << ip << ':' << port;
     socket->connectToHost(ip, port, QIODevice::WriteOnly);
-    if(socket->waitForConnected(5000))
+}
+
+void FileClient::sendData()
+{
+    //Disconnect because sendFile & sendStr will create connection
+    QObject::disconnect(socket, &QAbstractSocket::bytesWritten, 0, 0);
+    //While queue is not empty
+    if ( !dataQueue.isEmpty())
     {
-        qDebug() << "Connected";
-        return true;
+        QPair<type, QString> pair = dataQueue.first();
+        QString str = pair.second;
+        if (pair.first == _STRING)
+        {
+            //Send string
+            sendStr(str);
+        }
+        else
+        {
+            //Send file
+            sendFile(str);
+        }
     }
     else
-    {
-        qDebug() << "Error: " << socket->errorString();
-        return false;
-    }
-}
-
-void FileClient::disconnect()
-{
-    socket->disconnectFromHost();
-    qDebug() << "Disconnected";
-}
-
-void FileClient::changePeer(const QString& newIp, const quint16& newPort)
-{
-    ip = newIp;
-    port = newPort;
+        disconnect();
 }
 
 /*
@@ -61,38 +73,24 @@ void FileClient::changePeer(const QString& newIp, const quint16& newPort)
  * size(string), size("str") - qint64
  * string, "str" - QByteArray
  */
-bool FileClient::sendStr(const QString& str)
+void FileClient::sendStr(const QString& str)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
-        //Write size(string)
-        QByteArray fileSize = intToArr(str.toUtf8().size());
-        socket->write(fileSize);
-
-        //Write size("str") and "str"
+        QObject::connect(socket, &QAbstractSocket::bytesWritten, this, &FileClient::sendData);
+        //Get size(string)
+        QByteArray stringSize = intToArr(str.toUtf8().size());
+        //Get size("str") and "str"
         QString fileName = "str";
         QByteArray fileNameArr = fileName.toUtf8();
-        socket->write(intToArr(fileNameArr.size()));
-        socket->write(fileNameArr);
-
+        QByteArray fileNameArrSize = intToArr(fileNameArr.size());
         //Write string
-        socket->write(str.toUtf8());
-
-        if (socket->waitForBytesWritten())
-        {
-            qDebug() << "Data transmitted";
-            return true;
-        }
-        else
-        {
-            qDebug() << "Error: " << socket->errorString();
-            return false;
-        }
+        socket->write(stringSize + fileNameArrSize + fileNameArr + str.toUtf8());
+        dataQueue.dequeue();
     }
     else
     {
         qDebug() << "No conection established.";
-        return false;
     }
 }
 
@@ -103,59 +101,90 @@ bool FileClient::sendStr(const QString& str)
  * size(data), size(file_name) - qint64
  * file_name, data - QByteArray
  */
-bool FileClient::sendFile(const QString& path)
+void FileClient::sendFile(const QString& path)
 {
     if(socket->state() == QAbstractSocket::ConnectedState)
     {
-
+        //Open file
         QFile file(path);
         if ( ! file.open(QIODevice::ReadOnly))
         {
             qDebug() << "Couldn't open the file";
-            return false;
+            return;
         }
 
-        //Write size(file)
+        //Get size(file)
         QByteArray fileSize = intToArr(file.size());
-        socket->write(fileSize);
-
-        //Write size(file_name) + file_name
+        //Get size(file_name) + file_name
         QString fileName = file.fileName();
         fileName = fileName.section('/',-1,-1);
         QByteArray fileNameArr = fileName.toUtf8();
-        socket->write(intToArr(fileNameArr.size()));
-        socket->write(fileNameArr);
+        QByteArray fileNameArrSize = intToArr(fileNameArr.size());
 
-        //Write file by chunks
-        QByteArray fileArray = file.read(32768*8);
-        bool result = false;
-        while( !fileArray.isEmpty())
-        {
-            //qDebug() << "Read : " << fileArray.size();
-            socket->write(fileArray);
-            result = socket->waitForBytesWritten();
-            fileArray.clear();
-            fileArray = file.read(32768*8);
-        }
-        file.close();
-        if (result)
-        {
-            qDebug() << "Data transmitted";
-            return true;
-        }
-        else
-        {
-            qDebug() << "Error: " << socket->error();
-            return false;
-        }
+        QObject::connect(socket, &QAbstractSocket::bytesWritten, this, &FileClient::writeFileToSocket);
+        socket->write(fileSize + fileNameArrSize + fileNameArr);
+    }
+    else
+        qDebug() << "No conection established";
+}
+
+
+void FileClient::writeFileToSocket(qint64 bytesWritten)
+{
+    qDebug() << "bw: " << bytesWritten;
+    static bool first = true;
+    static qint64 pos = 0;
+    if (first)
+    {
+         pos -= bytesWritten;
+         first = false;
+    }
+    pos += bytesWritten;
+    //Open file
+    QString path = dataQueue.first().second;
+    QFile file(path);
+    file.open(QIODevice::ReadOnly);
+
+    //Write file by chunks
+    file.seek(pos);
+    QByteArray fileArray = file.read(32768*8);
+    //TODO ??
+    file.close();
+
+    if( !fileArray.isEmpty())
+    {
+        socket->write(fileArray);
     }
     else
     {
-        qDebug() << "No conection established";
-        return false;
+        qDebug() << pos;
+        file.close();
+        //Delete file from queue
+        dataQueue.dequeue();
+        pos = 0;
+        first = true;
+        sendData();
     }
+}
 
-    return false;
+void FileClient::disconnect()
+{
+    socket->disconnectFromHost();
+    qDebug() << "Disconnected";
+    //Disconnect everything from bytesWritten
+    QObject::disconnect(socket, &QAbstractSocket::bytesWritten, 0, 0);
+    emit transmitted();
+}
+
+const QString& FileClient::getIp()
+{
+    return ip;
+}
+
+void FileClient::changePeer(const QString& newIp, const quint16& newPort)
+{
+    ip = newIp;
+    port = newPort;
 }
 
 

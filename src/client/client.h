@@ -19,7 +19,7 @@ public:
 signals:
 
 private slots:
-    bool getOnline();
+    void getOnline();
     void getNewFile(const QString& path, const QString& ip);
 
 private:
