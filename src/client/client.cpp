@@ -1,17 +1,18 @@
-#include <QCoreApplication>
 #include <QDebug>
 #include "client.h"
 
-Client::Client(QObject* parent, const QString& defaultPath):
+Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16 _port):
     QObject(parent),
-    path(defaultPath)
+    path(defaultPath),
+    ip(_ip),
+    port(_port)
 {
     //Start modules
-    fileServer = new FileServer(0, 1234, path);
-    fileClient = new FileClient(0, "127.0.0.1", 12345);
+    fileServer = new FileServer(this, 1234, path);
+    fileClient = new FileClient(this, ip, port);
     config = new Config;
-    onlineTimer = new QTimer;
-    screenTimer = new QTimer;
+    onlineTimer = new QTimer(this);
+    screenTimer = new QTimer(this);
 
     fileServer->start();
 
@@ -28,16 +29,6 @@ Client::Client(QObject* parent, const QString& defaultPath):
 
     //Update client state
     update();
-
-    //Get username
-    name = qgetenv("USER");
-    if (name.isEmpty())
-    {
-        name = qgetenv("USERNAME");
-        if (name.isEmpty())
-            name = qgetenv("COMPUTERNAME");
-    }
-
 
     //Trying to connect to server
     getOnline();
@@ -66,13 +57,13 @@ Client::Client(QObject* parent, const QString& defaultPath):
 
 Client::~Client()
 {
-    //TODO
-    //fileClient->sendStr("OFFLINE:" + name);
+    fileClient->getOffline();
     delete onlineTimer;
     delete screenTimer;
     delete config;
-    delete fileServer;
     delete fileClient;
+    delete fileServer;
+    qDebug() << "Client deleted.";
 }
 
 void Client::update()
@@ -89,7 +80,8 @@ void Client::update()
     qDebug() << "MWH:\t" << ((buttons & 0x0001) ? 1 : 0);
 
     //Update screenshot parameters
-    MouseHook::instance().setParameters(buttons, config->seconds);
+    //TODO
+    //MouseHook::instance().setParameters(buttons, config->seconds);
 }
 
 void Client::getOnline()
@@ -98,7 +90,7 @@ void Client::getOnline()
     connect(onlineTimer, &QTimer::timeout, fileClient, &FileClient::connect);
     connect(fileClient, &FileClient::transmitted, onlineTimer, &QTimer::stop);
     //Send string
-    fileClient->enqueueData(_STRING, "ONLINE:" + name);
+    fileClient->enqueueData(_STRING, "ONLINE:" + fileClient->getName());
     fileClient->connect();
 }
 
@@ -129,11 +121,3 @@ void Client::getNewConfig(const QString &path)
         dir.rmdir(path.section('/', 0, -2)); //dir.name()
 }
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
-    Client client1;
-
-    return a.exec();
-
-}

@@ -33,6 +33,7 @@ FileServer::FileServer(QObject* parent, const quint16 &p, const QString& default
 FileServer::~FileServer()
 {
     delete server;
+    qDebug() << "File server deleted.";
 }
 
 bool FileServer::start()

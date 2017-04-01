@@ -6,7 +6,7 @@
 //Yusuke Kamiyamane
 //License: Creative Commons (Attribution 3.0 Unported)
 
-Server::Server(QWidget *parent, const QString& defaultPath) :
+Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     QMainWindow(parent),
     path(defaultPath),
     ui(new Ui::Server)
@@ -64,7 +64,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
     });
 
     //Start modules
-    fileServer = new FileServer(this, 12345, path + "/users");
+    fileServer = new FileServer(this, _port, path + "/users");
     fileClient = new FileClient(this, "127.0.0.1", 1234);
     fileServer->start();
 

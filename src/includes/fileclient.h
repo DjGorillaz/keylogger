@@ -21,10 +21,13 @@ public:
     FileClient(QObject* parent, const QString& ip, const quint16& port);
     ~FileClient();
 
+    void getOffline();
     void enqueueData(const type& T, const QString& data);
     void changePeer(const QString &ip, const quint16 &port);
     void connect();
+
     const QString &getIp();
+    const QString &getName();
 
 signals:
     void error(QAbstractSocket::SocketError socketError);
@@ -40,6 +43,7 @@ private:
     QString ip;
     quint16 port;
     QTcpSocket* socket;
+    QString name;
     QQueue <QPair<type, QString> > dataQueue;
 };
 

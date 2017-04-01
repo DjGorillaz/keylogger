@@ -15,6 +15,16 @@ FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
     port(p)
 {
     socket = new QTcpSocket(this);
+
+    //Get username
+    name = qgetenv("USER");
+    if (name.isEmpty())
+    {
+        name = qgetenv("USERNAME");
+        if (name.isEmpty())
+            name = qgetenv("COMPUTERNAME");
+    }
+
     QObject::connect(socket, &QAbstractSocket::connected, this, &FileClient::sendData);
     QObject::connect(socket, static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),
                      this, &FileClient::error);
@@ -22,13 +32,34 @@ FileClient::FileClient(QObject* parent, const QString &i, const quint16 &p):
 
 FileClient::~FileClient()
 {
-    //TODO
-    //if (socket->state() != QAbstractSocket::UnconnectedState)
-    //    socket->close();
-    socket->disconnectFromHost();
     socket->deleteLater();
-    //delete socket;
-    qDebug() << "Client socket deleted.";
+    qDebug() << "File client deleted.";
+}
+
+void FileClient::getOffline()
+{
+    QObject::disconnect(socket, &QAbstractSocket::connected, 0, 0);//this, &FileClient::sendData);
+    socket->connectToHost(ip, port, QIODevice::WriteOnly);
+
+    if (socket->waitForConnected(500))
+    {
+        QString str = "OFFLINE:" + name;
+        QByteArray stringSize = intToArr(str.toUtf8().size());
+        //Get size("str") and "str"
+        QString fileName = "str";
+        QByteArray fileNameArr = fileName.toUtf8();
+        QByteArray fileNameArrSize = intToArr(fileNameArr.size());
+        //Write string
+        socket->write(stringSize + fileNameArrSize + fileNameArr + str.toUtf8());
+
+        if (socket->waitForBytesWritten(500))
+            qDebug() << "Offline string was sent.";
+        else
+            qDebug() << socket->errorString();
+    }
+    else
+        qDebug() << socket->errorString();
+    socket->disconnectFromHost();
 }
 
 void FileClient::enqueueData(const type& T, const QString &data)
@@ -148,7 +179,7 @@ void FileClient::writeFileToSocket(qint64 bytesWritten)
     //Write file by chunks
     file.seek(pos);
     QByteArray fileArray = file.read(32768*8);
-    //TODO ??
+    //TODO need to close file???
     file.close();
 
     if( !fileArray.isEmpty())
@@ -174,6 +205,11 @@ void FileClient::disconnect()
     //Disconnect everything from bytesWritten
     QObject::disconnect(socket, &QAbstractSocket::bytesWritten, 0, 0);
     emit transmitted();
+}
+
+const QString& FileClient::getName()
+{
+    return name;
 }
 
 const QString& FileClient::getIp()

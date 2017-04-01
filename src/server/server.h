@@ -25,7 +25,7 @@ class Server : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Server(QWidget *parent = 0, const QString& path = QDir::currentPath());
+    explicit Server(QWidget *parent = 0, const QString& path = QDir::currentPath(), quint16 _port = 12345);
     ~Server();
 
 private slots:
