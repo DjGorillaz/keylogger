@@ -6,7 +6,7 @@
 //Yusuke Kamiyamane
 //License: Creative Commons (Attribution 3.0 Unported)
 
-Server::Server(QWidget *parent, const QString& defaultPath) :
+Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     QMainWindow(parent),
     path(defaultPath),
     ui(new Ui::Server)
@@ -64,7 +64,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
     });
 
     //Start modules
-    fileServer = new FileServer(this, 12345, path + "/users");
+    fileServer = new FileServer(this, _port, path + "/users");
     fileClient = new FileClient(this, "127.0.0.1", 1234);
     fileServer->start();
 
@@ -199,6 +199,8 @@ bool Server::loadUsers()
 
 void Server::getString(const QString str, const QString ip)
 {
+    //TODO: delete
+    ui->plainTextEdit->appendPlainText(str);
     //Parse string
     QString command = str.section(':', 0, 0);
     //If user online
@@ -275,10 +277,10 @@ void Server::configSendClicked()
         QModelIndex ipIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 1);
         QString ip = ipIndex.data().toString();
         quint16 port = 1234;
-        QString cfgPath = path + "/configs/" + ip + ".cfg";
+        //QString cfgPath = path + "/configs/" + ip + ".cfg";
         QString tempCfgPath = path + "/configs/" + ip + "_temp.cfg";
-        QFile oldCfgFile(cfgPath);
-        QFile tempCfgFile(tempCfgPath);
+        //QFile oldCfgFile(cfgPath);
+        //QFile tempCfgFile(tempCfgPath);
         Config* cfg = usersConfig.value(ip);
 
         setConfig(*cfg);
@@ -286,20 +288,31 @@ void Server::configSendClicked()
 
         //Save temp config
         saveConfig(*cfg, tempCfgPath);
+
         //Send config
-        fileClient->connect();
-        if (fileClient->sendFile(tempCfgPath))
+
+        connect(fileClient, &FileClient::transmitted, [this] ()
         {
+            QString cfg = path + "/configs/" + fileClient->getIp();
+            QFile oldCfgFile(cfg + ".cfg");
             if (oldCfgFile.exists())
                 oldCfgFile.remove();
-            tempCfgFile.rename(cfgPath);
+            QFile tempCfgFile(cfg + "_temp.cfg");
+            tempCfgFile.rename(cfg + ".cfg");
         }
-        else
+        );
+
+        connect(fileClient, &FileClient::error, [this] (QAbstractSocket::SocketError socketError)
         {
-            qDebug() << "Config not sent";
+            qDebug() << "Config not sent" << socketError;
+            QString cfg = path + "/configs/" + fileClient->getIp();
+            QFile tempCfgFile(cfg + "_temp.cfg");
             tempCfgFile.remove();
-        }
-        fileClient->disconnect();
+        });
+
+        //Send config
+        fileClient->enqueueData(_FILE, tempCfgPath);
+        fileClient->connect();
     }
 }
 

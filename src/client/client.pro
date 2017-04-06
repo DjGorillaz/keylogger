@@ -1,5 +1,4 @@
 QT += core
-QT -= gui
 QT += network
 
 #QT += widgets
@@ -19,11 +18,13 @@ LIBS += User32.lib \
 INCLUDEPATH += ../includes/
 
 SOURCES += \
+        main.cpp \
         client.cpp \
         ../includes/config.cpp \
         ../includes/fileclient.cpp \
         ../includes/fileserver.cpp \
         ../includes/mousehookWinApi.cpp
+
 
 HEADERS += \
         client.h \
