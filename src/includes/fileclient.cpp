@@ -162,7 +162,6 @@ void FileClient::sendFile(const QString& path)
 
 void FileClient::writeFileToSocket(qint64 bytesWritten)
 {
-    qDebug() << "bw: " << bytesWritten;
     static bool first = true;
     static qint64 pos = 0;
     if (first)
@@ -188,7 +187,6 @@ void FileClient::writeFileToSocket(qint64 bytesWritten)
     }
     else
     {
-        qDebug() << pos;
         file.close();
         //Delete file from queue
         dataQueue.dequeue();

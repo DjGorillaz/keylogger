@@ -44,32 +44,26 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
             this, [this]()
     {
         //Thread for making screenshots files
-        QThread* thread = new QThread;
-        MakeScreen* scr = new MakeScreen(0);
-        scr->moveToThread(thread);
+        QThread* thread = new QThread(this);
+        MakeScreen* screen = new MakeScreen(0);
+        screen->moveToThread(thread);
 
-        connect(thread, &QThread::started, scr, &MakeScreen::makeScreenshot);
-        connect(scr, &MakeScreen::screenSaved, thread, &QThread::quit);
+        connect(thread, &QThread::started, screen, &MakeScreen::makeScreenshot);
+        connect(screen, &MakeScreen::screenSaved, thread, &QThread::quit);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-        connect(thread, &QThread::finished, scr, &MakeScreen::deleteLater);
+        connect(thread, &QThread::finished, screen, &MakeScreen::deleteLater);
 
         thread->start();
 
-        connect(scr, &MakeScreen::screenSaved,
+        connect(screen, &MakeScreen::screenSaved,
         this, [this](QString path)
         {
-            //Thread for transferring files
-            QThread* thread = new QThread;
-            SendData* file = new SendData(0, path);
-            file->moveToThread(thread);
-
-            connect(thread, &QThread::started, file, &SendData::connectAndSendFile);
-            connect(file, &SendData::disconnected, thread, &QThread::quit);
-            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(thread, &QThread::finished, file, &SendData::deleteLater);
-
-            thread->start();
-            });
+            //TODO: remove
+            qDebug() << path;
+            //Send screenshot
+            fileClient->enqueueData(_FILE, path);
+            fileClient->connect();
+        });
     });
 }
 
@@ -98,8 +92,7 @@ void Client::update()
     qDebug() << "MWH:\t" << ((buttons & 0x0001) ? 1 : 0);
 
     //Update screenshot parameters
-    //TODO
-    //MouseHook::instance().setParameters(buttons, config->seconds);
+    MouseHook::instance().setParameters(buttons, config->seconds);
 }
 
 void Client::getOnline()

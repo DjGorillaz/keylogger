@@ -8,7 +8,6 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
   switch( fdwCtrlType )
   {
     case CTRL_C_EVENT:
-      //Handle CTRL-C signal.
       app->quit();
       return( TRUE );
 
@@ -17,7 +16,6 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
       return( TRUE );
 
     case CTRL_BREAK_EVENT:
-      // Pass other signals to the next handler.
       app->quit();
       return TRUE;
 
@@ -153,10 +151,8 @@ int main(int argc, char *argv[])
     //CloseHandle(hInvisiblethread);
 
     //Set console ctrl handler
-    if( SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE ) )
-        qDebug() << "The Control Handler is installed.";
-    else
-        qDebug() << "ERROR: Could not set control handler.";
+    if( ! SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE ) )
+        qDebug() << "Handle installation error.";
 
     //Get command line arguments
     if (argc <= 1)

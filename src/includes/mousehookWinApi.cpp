@@ -46,8 +46,8 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
     QString path = QDir::currentPath() + "/screens";
     dir.mkdir(path);
 
-    timer = new QTimer;
-    MakeScreen* scr = new MakeScreen(0);
+    timer = new QTimer(this);
+    MakeScreen* scr = new MakeScreen(this);
     connect(timer, &QTimer::timeout, scr, &MakeScreen::makeScreenshot);
     scr->deleteLater();
     HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -61,7 +61,7 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
         qDebug() << "Mouse hook installation error";
 
     //Set initial parameters
-    LMB = true;     //degub
+    LMB = false;
     RMB = false;
     MMB = false;
     MWH = false;

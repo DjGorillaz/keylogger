@@ -5,7 +5,6 @@
 #include <QDir>
 #include <QTimer>
 #include <QTime>
-#include <QThread>
 
 #include <windows.h>
 #include <gdiplus.h>
@@ -44,7 +43,7 @@ class MakeScreen : public QObject
 {
     Q_OBJECT
 public:
-    MakeScreen(QObject* parent);
+    explicit MakeScreen(QObject* parent = 0);
     ~MakeScreen();
 
 public slots:

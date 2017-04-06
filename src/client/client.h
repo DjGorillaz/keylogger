@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QThread>
 
 #include "config.h"
 #include "fileserver.h"
