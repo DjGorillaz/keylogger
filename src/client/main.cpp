@@ -142,7 +142,6 @@ DWORD WINAPI RunInvisibleWindowThread(LPVOID lpParam)
 
 int main(int argc, char *argv[])
 {
-
     app = new QCoreApplication(argc, argv);
     Client* client1;
 

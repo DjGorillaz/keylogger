@@ -78,11 +78,10 @@ void FileServer::readyRead()
     //For differrent users
     QString subFolder = getIp(socket);
 
-    while (socket->bytesAvailable() > 0)
+    while (socket->bytesAvailable() > 0 || buffer->size() >= 16)
     {
         QByteArray tempArray = socket->readAll();
         buffer->append(tempArray);
-
         //Read data for the first time
         if (buffer->size() >= 16 && size == 0)
         {
@@ -158,7 +157,8 @@ void FileServer::readyRead()
                 emit stringRecieved( buffer->left(size), subFolder );
                 buffer->remove(0, size);
                 nullBuffer(socket);
-                //If buffer is not empty
+
+                /*
                 while (buffer->size() >= 16 && size == 0)
                 {
                     qint64 fileNameSize = arrToInt(buffer->mid(8,8));
@@ -176,11 +176,19 @@ void FileServer::readyRead()
                     else
                         break;
                 }
+                */
+
+                //If buffer is not empty
+                if (buffer->size() >= 16)
+                {
+                    emit socket->readyRead();
+                    //this->readyRead();
+                }
             }
-            nullBuffer(socket);
+            else
+                nullBuffer(socket);
         }
     }
-
 }
 
 void FileServer::disconnected()

