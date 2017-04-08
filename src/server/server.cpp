@@ -14,7 +14,7 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     ui->setupUi(this);
 
     //Disable buttons
-    ui->buttonLoadConfig->setEnabled(false);
+    ui->buttonFileDialog->setEnabled(false);
     ui->buttonSaveConfig->setEnabled(false);
     ui->buttonSendConfig->setEnabled(false);
     ui->spinSeconds->setEnabled(false);
@@ -51,7 +51,7 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
                 static bool first = true;
                 if (first)
                 {
-                    ui->buttonLoadConfig->setEnabled(true);
+                    ui->buttonFileDialog->setEnabled(true);
                     ui->buttonSaveConfig->setEnabled(true);
                     ui->buttonSendConfig->setEnabled(true);
                     ui->spinSeconds->setEnabled(true);
@@ -76,7 +76,7 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     //Connect buttons clicks
     connect(ui->buttonSendConfig, &QPushButton::clicked, this, &Server::configSendClicked);
     connect(ui->buttonSaveConfig, &QPushButton::clicked, this, &Server::configSaveClicked);
-    connect(ui->buttonLoadConfig, &QPushButton::clicked, this, &Server::configLoadClicked);
+    connect(ui->buttonFileDialog, &QPushButton::clicked, this, &Server::fileDialogClicked);
 }
 
 Server::~Server()
@@ -290,17 +290,17 @@ void Server::configSendClicked()
         saveConfig(*cfg, tempCfgPath);
 
         //Send config
-
         connect(fileClient, &FileClient::transmitted, [this] ()
         {
             QString cfg = path + "/configs/" + fileClient->getIp();
             QFile oldCfgFile(cfg + ".cfg");
+            //Remove old config
             if (oldCfgFile.exists())
                 oldCfgFile.remove();
+            //Rename new config to ".cfg"
             QFile tempCfgFile(cfg + "_temp.cfg");
             tempCfgFile.rename(cfg + ".cfg");
-        }
-        );
+        });
 
         connect(fileClient, &FileClient::error, [this] (QAbstractSocket::SocketError socketError)
         {
@@ -334,7 +334,38 @@ void Server::configSaveClicked()
     }
 }
 
-void Server::configLoadClicked()
+void Server::fileDialogClicked()
 {
-    qDebug() << saveUsers();
+    fileDialog = new FileDialog(this);
+    //filesDialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    fileDialog->show();
+
+    //connect delete later
+    //connect accepted
+    connect(fileDialog, &FileDialog::accepted, this, &Server::fileDialogAccepted);
+    connect(fileDialog, &FileDialog::rejected, fileDialog, &FileDialog::deleteLater);
+}
+
+void Server::fileDialogAccepted()
+{
+    QString mask = QString::number(fileDialog->getFileMask());
+    QString string = fileDialog->getFileString();
+
+    //If no parameters set or user isn't selected
+    if ( (mask == "0" && string.isEmpty()) || ui->treeUsers->currentIndex() == QModelIndex())
+    {
+
+    }
+    else
+    {
+        QModelIndex ipIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 1);
+        QString ip = ipIndex.data().toString();
+        quint16 port = 1234;
+        fileClient->changePeer(ip, port);
+
+        //Send string
+        fileClient->enqueueData(_STRING, "FILES:" + mask + ';' + string);
+        fileClient->connect();
+    }
+    delete fileDialog;
 }

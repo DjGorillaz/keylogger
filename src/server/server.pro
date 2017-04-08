@@ -29,14 +29,17 @@ SOURCES += main.cpp \
         server.cpp  \
         ../includes/config.cpp \
         ../includes/fileclient.cpp \
-        ../includes/fileserver.cpp
+        ../includes/fileserver.cpp \
+        filedialog.cpp
 
 HEADERS  += server.h    \
         ../includes/config.h \
         ../includes/fileclient.h \
-        ../includes/fileserver.h
+        ../includes/fileserver.h \
+        filedialog.h
 
-FORMS    += server.ui
+FORMS    += server.ui \
+        filedialog.ui
 
 RESOURCES += \
         ../images/images.qrc

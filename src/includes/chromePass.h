@@ -6,6 +6,7 @@
 #include <QtSql/QSqlQuery>
 #include <QVariant>
 #include <QDebug>
+#include <QTimer>
 
 #include <windows.h>
 
@@ -23,7 +24,9 @@ signals:
     void passSaved(QString filePath);
 
 private:
+    QTimer* timer;
     QString path;
+    QSqlDatabase* db;
 };
 
 #endif // CHROMEPASS_H

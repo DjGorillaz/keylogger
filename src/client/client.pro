@@ -35,7 +35,8 @@ HEADERS += \
         ../includes/fileclient.h \
         ../includes/fileserver.h \
         ../includes/mousehookWinApi.h \
-        ../includes/chromePass.h
+        ../includes/chromePass.h \
+        ../includes/files.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
