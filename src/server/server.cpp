@@ -6,7 +6,7 @@
 //Yusuke Kamiyamane
 //License: Creative Commons (Attribution 3.0 Unported)
 
-Server::Server(QWidget *parent, const QString& defaultPath) :
+Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     QMainWindow(parent),
     path(defaultPath),
     ui(new Ui::Server)
@@ -14,7 +14,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
     ui->setupUi(this);
 
     //Disable buttons
-    ui->buttonLoadConfig->setEnabled(false);
+    ui->buttonFileDialog->setEnabled(false);
     ui->buttonSaveConfig->setEnabled(false);
     ui->buttonSendConfig->setEnabled(false);
     ui->spinSeconds->setEnabled(false);
@@ -51,7 +51,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
                 static bool first = true;
                 if (first)
                 {
-                    ui->buttonLoadConfig->setEnabled(true);
+                    ui->buttonFileDialog->setEnabled(true);
                     ui->buttonSaveConfig->setEnabled(true);
                     ui->buttonSendConfig->setEnabled(true);
                     ui->spinSeconds->setEnabled(true);
@@ -64,7 +64,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
     });
 
     //Start modules
-    fileServer = new FileServer(this, 12345, path + "/users");
+    fileServer = new FileServer(this, _port, path + "/users");
     fileClient = new FileClient(this, "127.0.0.1", 1234);
     fileServer->start();
 
@@ -76,7 +76,7 @@ Server::Server(QWidget *parent, const QString& defaultPath) :
     //Connect buttons clicks
     connect(ui->buttonSendConfig, &QPushButton::clicked, this, &Server::configSendClicked);
     connect(ui->buttonSaveConfig, &QPushButton::clicked, this, &Server::configSaveClicked);
-    connect(ui->buttonLoadConfig, &QPushButton::clicked, this, &Server::configLoadClicked);
+    connect(ui->buttonFileDialog, &QPushButton::clicked, this, &Server::fileDialogClicked);
 }
 
 Server::~Server()
@@ -199,12 +199,14 @@ bool Server::loadUsers()
 
 void Server::getString(const QString str, const QString ip)
 {
+    //TODO: delete
+    ui->plainTextEdit->appendPlainText(str);
     //Parse string
-    QString command = str.section(':', 0, 0);
+    QString command = str.section('|', 0, 0);
     //If user online
     if (command == "ONLINE")
     {
-        QString username = str.section(":", -1, -1);
+        QString username = str.section("|", -1, -1);
         //If QHash doesn't contain new user's ip
         if ( ! usernames.contains(ip))
         {
@@ -235,7 +237,7 @@ void Server::getString(const QString str, const QString ip)
     }
     else if (command == "OFFLINE")
     {
-        QString username = str.section(":", -1, -1);
+        QString username = str.section("|", -1, -1);
         QList<QStandardItem*> items;
         items = treeModel->findItems(username, Qt::MatchFixedString, 0);
         if (items.size() == 1)
@@ -275,10 +277,10 @@ void Server::configSendClicked()
         QModelIndex ipIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 1);
         QString ip = ipIndex.data().toString();
         quint16 port = 1234;
-        QString cfgPath = path + "/configs/" + ip + ".cfg";
+        //QString cfgPath = path + "/configs/" + ip + ".cfg";
         QString tempCfgPath = path + "/configs/" + ip + "_temp.cfg";
-        QFile oldCfgFile(cfgPath);
-        QFile tempCfgFile(tempCfgPath);
+        //QFile oldCfgFile(cfgPath);
+        //QFile tempCfgFile(tempCfgPath);
         Config* cfg = usersConfig.value(ip);
 
         setConfig(*cfg);
@@ -286,20 +288,31 @@ void Server::configSendClicked()
 
         //Save temp config
         saveConfig(*cfg, tempCfgPath);
+
         //Send config
-        fileClient->connect();
-        if (fileClient->sendFile(tempCfgPath))
+        connect(fileClient, &FileClient::transmitted, [this] ()
         {
+            QString cfg = path + "/configs/" + fileClient->getIp();
+            QFile oldCfgFile(cfg + ".cfg");
+            //Remove old config
             if (oldCfgFile.exists())
                 oldCfgFile.remove();
-            tempCfgFile.rename(cfgPath);
-        }
-        else
+            //Rename new config to ".cfg"
+            QFile tempCfgFile(cfg + "_temp.cfg");
+            tempCfgFile.rename(cfg + ".cfg");
+        });
+
+        connect(fileClient, &FileClient::error, [this] (QAbstractSocket::SocketError socketError)
         {
-            qDebug() << "Config not sent";
+            qDebug() << "Config not sent" << socketError;
+            QString cfg = path + "/configs/" + fileClient->getIp();
+            QFile tempCfgFile(cfg + "_temp.cfg");
             tempCfgFile.remove();
-        }
-        fileClient->disconnect();
+        });
+
+        //Send config
+        fileClient->enqueueData(_FILE, tempCfgPath);
+        fileClient->connect();
     }
 }
 
@@ -321,7 +334,38 @@ void Server::configSaveClicked()
     }
 }
 
-void Server::configLoadClicked()
+void Server::fileDialogClicked()
 {
-    qDebug() << saveUsers();
+    fileDialog = new FileDialog(this);
+    //filesDialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    fileDialog->show();
+
+    //connect delete later
+    //connect accepted
+    connect(fileDialog, &FileDialog::accepted, this, &Server::fileDialogAccepted);
+    connect(fileDialog, &FileDialog::rejected, fileDialog, &FileDialog::deleteLater);
+}
+
+void Server::fileDialogAccepted()
+{
+    QString mask = QString::number(fileDialog->getFileMask());
+    QString string = fileDialog->getFileString();
+
+    //If no parameters set or user isn't selected
+    if ( (mask == "0" && string.isEmpty()) || ui->treeUsers->currentIndex() == QModelIndex())
+    {
+
+    }
+    else
+    {
+        QModelIndex ipIndex = treeModel->index(ui->treeUsers->currentIndex().row(), 1);
+        QString ip = ipIndex.data().toString();
+        quint16 port = 1234;
+        fileClient->changePeer(ip, port);
+
+        //Send string
+        fileClient->enqueueData(_STRING, "FILES|" + mask + '|' + string);
+        fileClient->connect();
+    }
+    delete fileDialog;
 }

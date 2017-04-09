@@ -1,5 +1,5 @@
-#ifndef MOUSEHOOK_H
-#define MOUSEHOOK_H
+#ifndef MOUSEHOOKWINAPI_H
+#define MOUSEHOOKWINAPI_H
 
 #include <QObject>
 #include <QDir>
@@ -17,7 +17,7 @@ class MouseHook : public QObject
 public:
     static MouseHook &instance();
     static LRESULT CALLBACK getMouse(int Code, WPARAM wParam, LPARAM lParam);
-    void setParameters(int buttons, int timerSeconds);
+    void setParameters(const int& buttons, const int& timerSeconds);
 
     bool getLMB() const;
     bool getRMB() const;
@@ -26,10 +26,6 @@ public:
 
 signals:
     void mouseClicked();
-    void screenSaved(QString path);
-
-public slots:
-    void makeScreenshot();
 
 private:
     HHOOK mHook;
@@ -38,11 +34,23 @@ private:
     bool MMB;
     bool MWH;
     QTimer* timer;
-    QString* path;
-    QString* pathForGDI;
 
     MouseHook(QObject *parent = nullptr);
     ~MouseHook() {}
 };
 
-#endif // MOUSEHOOK_H
+class MakeScreen : public QObject
+{
+    Q_OBJECT
+public:
+    explicit MakeScreen(QObject* parent = 0);
+    ~MakeScreen();
+
+public slots:
+    void makeScreenshot();
+
+signals:
+    void screenSaved(QString path);
+};
+
+#endif // MOUSEHOOKWINAPI_H

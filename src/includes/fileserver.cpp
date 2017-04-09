@@ -1,5 +1,5 @@
 #include "fileserver.h"
-
+#include <QByteArrayMatcher>
 //Get size of array
 qint64 arrToInt(const QByteArray& qba)
 {
@@ -33,6 +33,7 @@ FileServer::FileServer(QObject* parent, const quint16 &p, const QString& default
 FileServer::~FileServer()
 {
     delete server;
+    qDebug() << "File server deleted.";
 }
 
 bool FileServer::start()
@@ -77,11 +78,10 @@ void FileServer::readyRead()
     //For differrent users
     QString subFolder = getIp(socket);
 
-    while (socket->bytesAvailable() > 0)
+    while (socket->bytesAvailable() > 0 || buffer->size() >= 16)
     {
         QByteArray tempArray = socket->readAll();
         buffer->append(tempArray);
-
         //Read data for the first time
         if (buffer->size() >= 16 && size == 0)
         {
@@ -91,6 +91,7 @@ void FileServer::readyRead()
             //Remove read data
             buffer->remove(0, 16 + fileNameSize);
         }
+
         //If we get file
         if (fileName != "str")
         {
@@ -102,14 +103,14 @@ void FileServer::readyRead()
             {
                 while (file.exists())
                 {
-                    newFileName = fileName.section('.', 0, -2) +       //file name
+                    newFileName = fileName.section('.', 0, -2) +        //file name
                                 " (" + QString::number(ctr) + ")." +    //(i).
-                                fileName.section('.', -1, -1);         //extension
-                    file.setFileName(newFileName);
+                                fileName.section('.', -1, -1);          //extension
+                    file.setFileName(path + '/' + subFolder + '/' + newFileName);
                      ++ctr;
                 }
                 //rename file in QHash
-                fileName =  newFileName;
+                names[socket] =  newFileName;
             }
             if (areNamesFinal.value(socket)== false)
                 areNamesFinal[socket] = true;
@@ -134,9 +135,10 @@ void FileServer::readyRead()
             //buffer size + file size >= actual file size
             else
             {
-                //Write to file first (*size - fileSize) bytes from buffer
+                //Write to file first (size - fileSize) bytes from buffer
                 file.write(buffer->left(size - fileSize));
                 buffer->remove(0, size - fileSize);
+
                 file.close();
                 qDebug() << "File received";
 
@@ -148,16 +150,45 @@ void FileServer::readyRead()
         //If we get string
         else
         {
-            //If recieve whole string
-            if (buffer->size() >= size) //(*size + 16 + name->toUtf8().size())
+            //If string recieved
+            if (buffer->size() >= size) //(size + 16 + name->toUtf8().size())
             {
-                qDebug() << *(buffers.value(socket));
-                emit stringRecieved( *(buffers.value(socket)), subFolder );
+                qDebug() << buffer->left(size);
+                emit stringRecieved( buffer->left(size), subFolder );
+                buffer->remove(0, size);
                 nullBuffer(socket);
+
+                /*
+                while (buffer->size() >= 16 && size == 0)
+                {
+                    qint64 fileNameSize = arrToInt(buffer->mid(8,8));
+                    fileName = QString(buffer->mid(16, fileNameSize));
+                    //If buffer contains next string
+                    if (fileName == "str")
+                    {
+                        size = arrToInt(buffer->mid(0,8));
+                        //Remove size, fileNameSize and fileName
+                        buffer->remove(0, 16 + fileNameSize);
+                        emit stringRecieved( QString(buffer->left(size)), subFolder );
+                        //Remove string from buffer
+                        buffer->remove(0, size);
+                    }
+                    else
+                        break;
+                }
+                */
+
+                //If buffer is not empty
+                if (buffer->size() >= 16)
+                {
+                    emit socket->readyRead();
+                    //this->readyRead();
+                }
             }
+            else
+                nullBuffer(socket);
         }
     }
-
 }
 
 void FileServer::disconnected()
@@ -186,5 +217,5 @@ void FileServer::nullBuffer(QTcpSocket* socket)
 
 void FileServer::progress(const qint64 current, const qint64 overall)
 {
-    qDebug() << current/1024/1024 << "MB of " << overall/1024/1024 << "MB";
+    qDebug() << current << "MB of " << overall << "MB";
 }
