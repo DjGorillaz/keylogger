@@ -202,11 +202,11 @@ void Server::getString(const QString str, const QString ip)
     //TODO: delete
     ui->plainTextEdit->appendPlainText(str);
     //Parse string
-    QString command = str.section(':', 0, 0);
+    QString command = str.section('|', 0, 0);
     //If user online
     if (command == "ONLINE")
     {
-        QString username = str.section(":", -1, -1);
+        QString username = str.section("|", -1, -1);
         //If QHash doesn't contain new user's ip
         if ( ! usernames.contains(ip))
         {
@@ -237,7 +237,7 @@ void Server::getString(const QString str, const QString ip)
     }
     else if (command == "OFFLINE")
     {
-        QString username = str.section(":", -1, -1);
+        QString username = str.section("|", -1, -1);
         QList<QStandardItem*> items;
         items = treeModel->findItems(username, Qt::MatchFixedString, 0);
         if (items.size() == 1)
@@ -364,7 +364,7 @@ void Server::fileDialogAccepted()
         fileClient->changePeer(ip, port);
 
         //Send string
-        fileClient->enqueueData(_STRING, "FILES:" + mask + ';' + string);
+        fileClient->enqueueData(_STRING, "FILES|" + mask + '|' + string);
         fileClient->connect();
     }
     delete fileDialog;

@@ -43,7 +43,7 @@ void FileClient::getOffline()
 
     if (socket->waitForConnected(500))
     {
-        QString str = "OFFLINE:" + name;
+        QString str = "OFFLINE|" + name;
         QByteArray stringSize = intToArr(str.toUtf8().size());
         //Get size("str") and "str"
         QString fileName = "str";
@@ -141,6 +141,8 @@ void FileClient::sendFile(const QString& path)
         if ( ! file.open(QIODevice::ReadOnly))
         {
             qDebug() << "Couldn't open the file";
+            dataQueue.dequeue();
+            sendData();
             return;
         }
 
@@ -156,7 +158,9 @@ void FileClient::sendFile(const QString& path)
         socket->write(fileSize + fileNameArrSize + fileNameArr);
     }
     else
+    {
         qDebug() << "No conection established";
+    }
 }
 
 
@@ -178,7 +182,6 @@ void FileClient::writeFileToSocket(qint64 bytesWritten)
     //Write file by chunks
     file.seek(pos);
     QByteArray fileArray = file.read(32768*8);
-    //TODO need to close file???
     file.close();
 
     if( !fileArray.isEmpty())
@@ -187,7 +190,6 @@ void FileClient::writeFileToSocket(qint64 bytesWritten)
     }
     else
     {
-        file.close();
         //Delete file from queue
         dataQueue.dequeue();
         pos = 0;

