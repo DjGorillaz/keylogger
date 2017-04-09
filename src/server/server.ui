@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>519</height>
+    <width>404</width>
+    <height>523</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -98,9 +98,12 @@
      </layout>
     </item>
     <item row="3" column="0">
-     <widget class="QPushButton" name="buttonLoadConfig">
+     <widget class="QPushButton" name="buttonFileDialog">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="text">
-       <string>save users</string>
+       <string>open file dialog</string>
       </property>
      </widget>
     </item>
@@ -111,8 +114,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
-     <height>24</height>
+     <width>404</width>
+     <height>19</height>
     </rect>
    </property>
   </widget>

@@ -67,7 +67,7 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
     MWH = false;
 }
 
-void MouseHook::setParameters(int buttons, int seconds)
+void MouseHook::setParameters(const int& buttons, const int& seconds)
 {
     LMB = (buttons & 0x0008) ? 1 : 0;
     RMB = (buttons & 0x0004) ? 1 : 0;

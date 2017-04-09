@@ -4,26 +4,25 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    Server* server1;
-    QObject::connect(&a, &QCoreApplication::aboutToQuit, [=](){ delete server1; } );
+    Server* server;
 
     if (argc <= 1)
     {
-        server1 = new Server;
+        server = new Server;
     }
     else if (argc == 3)
     {
         //Set ip + port
-        server1 = new Server(0, QDir::currentPath(), QString(argv[1]).toInt() );
+        server = new Server(0, QDir::currentPath(), QString(argv[1]).toInt() );
     }
     else if (argc > 3)
     {
         //Set path + ip + port
-        server1 = new Server(0, argv[1], QString(argv[2]).toInt());
+        server = new Server(0, argv[1], QString(argv[2]).toInt());
     }
 
-    server1->show();
+    QObject::connect(&a, &QCoreApplication::aboutToQuit, [=](){ server->deleteLater(); } );
+    server->show();
 
     return a.exec();
 }
