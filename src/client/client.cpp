@@ -153,13 +153,11 @@ void Client::getString(const QString &string, const QString& /* ip */)
         }
 
         //Look for all files in string
-        currentFile = filesStr.section('|', 1, 1);
+        currentFile = filesStr.section('|', 1, 1, QString::SectionSkipEmpty);
         for (int i = 2; ! currentFile.isEmpty(); ++i)
         {
-            //TODO
-            //Update check if section is empty file1||file2
             fileClient->enqueueData(_FILE, currentFile);
-            currentFile = filesStr.section('|', i, i);
+            currentFile = filesStr.section('|', i, i, QString::SectionSkipEmpty);
         }
         fileClient->connect();
     }

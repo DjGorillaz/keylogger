@@ -12,11 +12,6 @@
 #include "chromePass.h"
 #include "files.h"
 
-enum Files
-{
-    ChromePass = 1
-};
-
 class Client : public QObject
 {
     Q_OBJECT
