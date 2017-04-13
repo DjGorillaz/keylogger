@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QThread>
+#include <QMutex>
 
 #include "config.h"
 #include "fileserver.h"
@@ -38,7 +39,7 @@ private:
     Config* config;
     FileServer* fileServer;
     FileClient* fileClient;
-    bool isChromePassExists;
+    QMutex* mutex;
 };
 
 #endif // CLIENT_H

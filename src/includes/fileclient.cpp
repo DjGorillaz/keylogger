@@ -140,7 +140,7 @@ void FileClient::sendFile(const QString& path)
         QFile file(path);
         if ( ! file.open(QIODevice::ReadOnly))
         {
-            qDebug() << "Couldn't open the file";
+            qDebug() << "Cannot open the file: " + path;
             dataQueue.dequeue();
             sendData();
             return;

@@ -176,16 +176,16 @@ bool Server::loadUsers()
         users >> usernames;
         usersFile.close();
         //Check all configs in folder by user's ip
-        Config* config = new Config;
         QDirIterator iter(path + "/configs", QStringList() << "*.cfg", QDir::Files);
         QString ip;
         while (iter.hasNext())
         {
             iter.next();
             ip = iter.fileName().section(".", 0, -2);
-            //If user already exists => load config
+            //If user already exists => load config to memory
             if (usernames.contains(ip))
             {
+                Config* config = new Config;
                 loadConfig(*config, path + "/configs/" + ip + ".cfg");
                 usersConfig.insert(ip, config);
             }

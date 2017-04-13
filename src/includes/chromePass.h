@@ -22,6 +22,7 @@ public slots:
 
 signals:
     void passSaved(QString filePath);
+    void error();
 
 private:
     QTimer* timer;
