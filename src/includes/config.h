@@ -7,9 +7,11 @@
 struct Config
 {
     //Screenshot
-    quint32 seconds;
+    quint32 secondsScreen;
+    quint32 secondsLog;
     int mouseButtons;
     bool bindEnter;
+    bool logRun;
     Config();
 };
 

