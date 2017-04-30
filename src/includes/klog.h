@@ -21,6 +21,7 @@ public:
     void setParameters(const bool& isWorking, const int& timerSeconds);
 
 signals:
+    void timerIsUp();
 
 private:
     QTimer* timer;

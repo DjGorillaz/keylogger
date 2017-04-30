@@ -98,8 +98,18 @@ void FileServer::readyRead()
             QFile file(path + '/' + subFolder + '/' + fileName);
             QString newFileName;
             int ctr = 1;
+            //Check extension
+            QString extension = fileName.section('.', -1, -1);
+
+            qint64 fileSize = file.size();
+            //If log received
+            if (extension == "log")
+            {
+                //To correct log saving
+                fileSize = 0;
+            }
             //If file already exists add (i)
-            if (file.exists() && areNamesFinal.value(socket) == false)
+            else if (file.exists() && areNamesFinal.value(socket) == false)
             {
                 while (file.exists())
                 {
@@ -120,7 +130,6 @@ void FileServer::readyRead()
             {
                 qDebug("File cannot be opened.");
             }
-            qint64 fileSize = file.size();
 
             //Signal for progress bar
             emit dataGet(fileSize, size);

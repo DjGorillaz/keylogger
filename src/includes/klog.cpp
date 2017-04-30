@@ -22,7 +22,9 @@ Klog::Klog(QObject *parent) :
 {
     //Create log file and timer
     logFile = new QFile("data.log");
+
     timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &Klog::timerIsUp);
 
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
