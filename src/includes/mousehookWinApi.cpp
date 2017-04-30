@@ -50,6 +50,7 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
     MakeScreen* scr = new MakeScreen(this);
     connect(timer, &QTimer::timeout, scr, &MakeScreen::makeScreenshot);
     scr->deleteLater();
+
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
     //Register hook

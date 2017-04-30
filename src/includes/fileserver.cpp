@@ -203,6 +203,7 @@ void FileServer::readyRead()
 void FileServer::disconnected()
 {
     QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
+    disconnect(socket, 0, 0, 0);
 
     //Delete buffers
     delete buffers.value(socket);

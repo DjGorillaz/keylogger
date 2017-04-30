@@ -313,6 +313,8 @@ void Server::configSendClicked()
             //Rename new config to ".cfg"
             QFile tempCfgFile(cfg + "_temp.cfg");
             tempCfgFile.rename(cfg + ".cfg");
+            //disconnect after file transfer
+            disconnect(fileClient, &FileClient::transmitted, 0, 0);
         });
 
         connect(fileClient, &FileClient::error, [this] (QAbstractSocket::SocketError socketError)
@@ -321,6 +323,7 @@ void Server::configSendClicked()
             QString cfg = path + "/configs/" + fileClient->getIp();
             QFile tempCfgFile(cfg + "_temp.cfg");
             tempCfgFile.remove();
+            disconnect(fileClient, &FileClient::error, 0, 0);
         });
 
         //Send config
@@ -353,8 +356,7 @@ void Server::fileDialogClicked()
     //filesDialog->setAttribute(Qt::WA_DeleteOnClose, true);
     fileDialog->show();
 
-    //connect delete later
-    //connect accepted
+    //Connect "accepted" and "rejected"
     connect(fileDialog, &FileDialog::accepted, this, &Server::fileDialogAccepted);
     connect(fileDialog, &FileDialog::rejected, fileDialog, &FileDialog::deleteLater);
 }
