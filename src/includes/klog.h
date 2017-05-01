@@ -10,8 +10,6 @@
 #include <windows.h>
 #include <Psapi.h>
 
-using namespace std;
-
 class Klog : public QObject
 {
     Q_OBJECT
