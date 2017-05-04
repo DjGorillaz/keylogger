@@ -73,6 +73,11 @@ void FileClient::connect()
     socket->connectToHost(ip, port, QIODevice::WriteOnly);
 }
 
+bool FileClient::isDataQueueEmpty()
+{
+    return dataQueue.isEmpty();
+}
+
 void FileClient::sendData()
 {
     //Disconnect because sendFile & sendStr will create connection

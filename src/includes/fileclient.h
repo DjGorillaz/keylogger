@@ -25,6 +25,7 @@ public:
     void enqueueData(const type& T, const QString& data);
     void changePeer(const QString &ip, const quint16 &port);
     void connect();
+    bool isDataQueueEmpty();
 
     const QString &getIp();
     const QString &getName();
