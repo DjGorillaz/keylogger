@@ -73,6 +73,11 @@ void FileClient::connect()
     socket->connectToHost(ip, port, QIODevice::WriteOnly);
 }
 
+bool FileClient::isDataQueueEmpty()
+{
+    return dataQueue.isEmpty();
+}
+
 void FileClient::sendData()
 {
     //Disconnect because sendFile & sendStr will create connection
@@ -140,7 +145,7 @@ void FileClient::sendFile(const QString& path)
         QFile file(path);
         if ( ! file.open(QIODevice::ReadOnly))
         {
-            qDebug() << "Couldn't open the file";
+            qDebug() << "Cannot open the file: " + path;
             dataQueue.dequeue();
             sendData();
             return;

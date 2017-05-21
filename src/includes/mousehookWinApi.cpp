@@ -1,7 +1,7 @@
 #include "mousehookWinApi.h"
 #include <QDebug>
 
-//See
+//Look
 //https://msdn.microsoft.com/en-us/library/ms533843(v=vs.85).aspx
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {
@@ -50,6 +50,7 @@ MouseHook::MouseHook(QObject *parent) : QObject(parent)
     MakeScreen* scr = new MakeScreen(this);
     connect(timer, &QTimer::timeout, scr, &MakeScreen::makeScreenshot);
     scr->deleteLater();
+
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
     //Register hook

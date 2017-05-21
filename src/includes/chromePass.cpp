@@ -1,6 +1,9 @@
 #include "chromePass.h"
 
-PassReader::PassReader(QObject* parent, const QString &str): QObject(parent), path(str), timer(nullptr)
+PassReader::PassReader(QObject* parent, const QString &str):
+    QObject(parent),
+    path(str),
+    timer(nullptr)
 {
     setlocale(LC_CTYPE, "rus");
 
@@ -45,7 +48,8 @@ bool PassReader::readPass()
         //If data base is locked
         if ( ! query.exec() )
         {
-            qDebug() << "db locked";
+            //TODO: del
+            qDebug() << "DB is locked";
             db->close();
             //Start timer
             if ( ! timer->isActive() )
@@ -108,8 +112,9 @@ bool PassReader::readPass()
     }
     else
     {
-        file.close();
         qDebug() << "Error. Cannot open DB.";
+        file.close();
+        emit error();
         return false;
     }
 
