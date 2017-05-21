@@ -97,7 +97,7 @@ Server::~Server()
 void Server::setupModels()
 {
     treeModel = new QStandardItemModel(this);
-    treeModel->setColumnCount(7);
+    treeModel->setColumnCount(9);
 
     //Set header names
     treeModel->setHeaderData(0, Qt::Horizontal, "username");
